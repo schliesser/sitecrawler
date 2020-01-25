@@ -7,6 +7,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use TYPO3\CMS\Core\Error\Exception;
 
 class CrawlSitemapCommand extends Command
 {
@@ -18,17 +19,12 @@ class CrawlSitemapCommand extends Command
         $this
             ->setDescription('Fetches a website (including all subpages), so the TYPO3 cache gets filled.')
             ->addArgument(
-                'sitemapUrl',
+                'url',
                 InputArgument::REQUIRED,
                 'The sitemap url.'
-            )
-            ->addArgument(
-                'hasSubSitemap',
-                InputArgument::OPTIONAL,
-                'The sitemap contains sub sitemaps',
-                1
             );
     }
+
     /**
      * @param InputInterface $input
      * @param OutputInterface $output
@@ -41,14 +37,20 @@ class CrawlSitemapCommand extends Command
         // Create temp directory
         exec('mkdir ' . $fetchDirectory);
 
-        echo $input->getArgument('sitemapUrl');
+        $output->writeln('Sitemap url:' . $input->getArgument('url'));
 
-//        $xml = file_get_contents($input->getArgument('sitemapUrl'));
-//        $sitemap = new SimpleXmlElement($xml);
-//        foreach($sitemap->url as $url) {
-//            $urls[] = (string)$url->loc;
-//        }
-//
+        $fileString = $this->fetchUrl($input->getArgument('url'));
+        $urls = $this->getUrlListFromFileString($fileString);
+        if (isset($urls['error'])) {
+            $output->writeln($urls['error']->getCode() . ': ' . $urls['error']->getMessage());
+            return;
+        }
+
+        //check if sitemap has sub sitemaps
+        foreach ($urls as $url) {
+            // todo: create callback function
+        }
+
 //        print_r($urls);
         /**
          * curl "https://www.doeser-gruppe.de/?sitemap=pages&type=1533906435&cHash=200804aefda721ee8f2b0302caffd3fa"
@@ -59,5 +61,27 @@ class CrawlSitemapCommand extends Command
 
         // Crawl sitemap website
         // exec('curl -q -r ' . $input->getArgument('sitemapUrl') . ' -P ' . $fetchDirectory);
+    }
+
+    protected function fetchUrl(string $url)
+    {
+        return file_get_contents($url);
+    }
+
+    protected function getUrlListFromFileString($fileString): array
+    {
+        $urls = [];
+        try {
+            $xml = simplexml_load_string($fileString);
+        } catch (Exception $e) {
+            return ['error' => $e];
+        }
+        $sitemap = json_decode(json_encode($xml), TRUE) ?: [];
+        if (isset($sitemap['sitemap'])) {
+            foreach ($sitemap['sitemap'] as $url) {
+                $urls[] = (string)$url['loc'];
+            }
+        }
+        return $urls;
     }
 }
