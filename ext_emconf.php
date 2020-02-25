@@ -1,8 +1,8 @@
 <?php
 
 $EM_CONF[$_EXTKEY] = [
-    'title' => 'Sitecrawler',
-    'description' => 'Crawl the sitemap (including all sub sitemaps), so the TYPO3 cache gets filled.',
+    'title' => 'TYPO3 sitemap crawler',
+    'description' => 'Crawl the sitemap (including all sub sitemaps), and call each url to warm up the TYPO3 page cache.',
     'category' => 'be',
     'author' => 'André Schließer',
     'author_email' => 'andy.schliesser@gmail.com',
