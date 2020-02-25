@@ -8,9 +8,20 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use TYPO3\CMS\Core\Error\Exception;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class CrawlSitemapCommand extends Command
 {
+    /**
+     * @var array
+     */
+    protected $urls = [];
+
+    /**
+     * @var array
+     */
+    private $errors = [];
+
     /**
      * Configure the command by defining the name, options and arguments
      */
@@ -31,27 +42,46 @@ class CrawlSitemapCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output): void
     {
+        $headers = null;
         $fetchDirectory = Environment::getVarPath() . '/sitecrawler';
-        // Remove temp directory
-        exec('rm -rf ' . $fetchDirectory);
-        // Create temp directory
-        exec('mkdir ' . $fetchDirectory);
 
-        $output->writeln('Sitemap url:' . $input->getArgument('url'));
+        // Flush temp directory
+        if (!GeneralUtility::flushDirectory($fetchDirectory)) {
+            // Create temp directory
+            GeneralUtility::mkdir($fetchDirectory);
+        }
+        $url = (string)$input->getArgument('url');
 
-        $fileString = $this->fetchUrl($input->getArgument('url'));
-        $urls = $this->getUrlListFromFileString($fileString);
-        if (isset($urls['error'])) {
-            $output->writeln($urls['error']->getCode() . ': ' . $urls['error']->getMessage());
+        $output->writeln('Sitemap url: ' . $url, OutputInterface::VERBOSITY_VERBOSE);
+
+        if (!GeneralUtility::isValidUrl($url)) {
+            $output->writeln('Error: Invalid url');
             return;
         }
 
-        //check if sitemap has sub sitemaps
-        foreach ($urls as $url) {
-            // todo: create callback function
+        // Fetch urls
+        $this->getUrlListFromSiteMap($url);
+        if ($this->errors) {
+            $this->printErrors($output);
+            return;
         }
 
-//        print_r($urls);
+        // Show urls in debug mode
+        $output->writeln(var_export($this->urls, true), OutputInterface::VERBOSITY_DEBUG);
+
+        $output->writeln('Found ' . count($this->urls) . ' urls to crawl');
+
+        //check if sitemap has sub sitemaps
+        foreach ($this->urls as $url) {
+            $output->writeln($url, OutputInterface::VERBOSITY_VERBOSE);
+            // todo: call url with or without pjax header
+            $output->writeln(GeneralUtility::getUrl($url, 2, $headers));
+        }
+
+        if ($this->errors) {
+            $this->printErrors($output);
+        }
+
         /**
          * curl "https://www.doeser-gruppe.de/?sitemap=pages&type=1533906435&cHash=200804aefda721ee8f2b0302caffd3fa"
          * | grep -e loc
@@ -63,25 +93,41 @@ class CrawlSitemapCommand extends Command
         // exec('curl -q -r ' . $input->getArgument('sitemapUrl') . ' -P ' . $fetchDirectory);
     }
 
-    protected function fetchUrl(string $url)
+    protected function printErrors(OutputInterface $output)
     {
-        return file_get_contents($url);
+        // print errors
+        foreach ($this->errors as $error) {
+            $output->writeln($error->getCode() . ': ' . $error->getMessage());
+        }
+
+        // reset errors
+        $this->errors = [];
     }
 
-    protected function getUrlListFromFileString($fileString): array
+    /**
+     * @param string $siteMapUrl
+     */
+    protected function getUrlListFromSiteMap(string $siteMapUrl): void
     {
-        $urls = [];
         try {
-            $xml = simplexml_load_string($fileString);
+            $xml = simplexml_load_string(GeneralUtility::getUrl($siteMapUrl));
         } catch (Exception $e) {
-            return ['error' => $e];
+            $this->errors[] = $e;
+            return;
         }
-        $sitemap = json_decode(json_encode($xml), TRUE) ?: [];
-        if (isset($sitemap['sitemap'])) {
-            foreach ($sitemap['sitemap'] as $url) {
-                $urls[] = (string)$url['loc'];
+        $siteMap = json_decode(json_encode($xml), true) ?: [];
+        if (($sites = $siteMap['sitemap']) || ($sites = $siteMap['url'])) {
+            foreach ($sites as $site) {
+                if ($url = (string)$site['loc']) {
+                    $params = GeneralUtility::explodeUrl2Array(parse_url($url)['query']);
+                    if (array_key_exists('sitemap', $params) || (int)$params['type'] === 1533906435) {
+                        $this->getUrlListFromSiteMap($url);
+                        $this->urls[] = $url;
+                    } else {
+                        $this->urls[] = $url;
+                    }
+                }
             }
         }
-        return $urls;
     }
 }
