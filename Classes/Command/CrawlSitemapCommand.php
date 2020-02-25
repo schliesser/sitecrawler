@@ -102,7 +102,12 @@ class CrawlSitemapCommand extends Command
         }
     }
 
-    protected function printErrors(OutputInterface $output)
+    /**
+     * Print errors and reset error storage array
+     *
+     * @param OutputInterface $output
+     */
+    protected function printErrors(OutputInterface $output): void
     {
         // print errors
         foreach ($this->errors as $error) {
@@ -114,6 +119,8 @@ class CrawlSitemapCommand extends Command
     }
 
     /**
+     * Fetch sitemap from url, parse xml and create list with urls
+     *
      * @param string $siteMapUrl
      */
     protected function getUrlListFromSiteMap(string $siteMapUrl): void
