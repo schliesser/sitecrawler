@@ -1,5 +1,4 @@
-# sitecrawler
-##**Sitemap crawler** for TYPO3
+# TYPO3 Sitemap crawler
 
 This extension provides a Symfony command to crawl the sitemap including all sub sitemaps. It gathers all available urls and than calls each url to warm up the TYPO3 page cache.
 
@@ -7,12 +6,14 @@ You can provide custom request headers in json format.
 
 ## Examples
 
-Simple sitemap
+Composer based:
 ```bash
 vendor/bin/typo3cms sitecrawler:crawl https://www.example.com/sitemap.xml
-```
 
-Custom request headers:
-```bash
+# with custom request headers
 vendor/bin/typo3cms sitecrawler:crawl https://www.example.com/sitemap.xml '{"X-Pjax": true}'
+```
+Non composer:
+```bash
+typo3/sysext/core/bin/typo3 sitecrawler:crawl https://www.example.com/sitemap.xml
 ```

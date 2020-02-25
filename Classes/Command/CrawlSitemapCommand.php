@@ -91,6 +91,7 @@ class CrawlSitemapCommand extends Command
         }
 
         // Stop progress bar
+        // @extensionScannerIgnoreLine
         $progressBar->finish();
 
         // Print errors or success
