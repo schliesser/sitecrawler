@@ -18,6 +18,6 @@
     }
   },
   "replace": {
-    "sitecrawler": "self.version"
+    "schliesser/sitecrawler": "self.version"
   }
 }
