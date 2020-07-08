@@ -135,7 +135,12 @@ class CrawlSitemapCommand extends Command
         $siteMap = json_decode(json_encode($xml), true) ?: [];
         if (($sites = $siteMap['sitemap']) || ($sites = $siteMap['url'])) {
             foreach ($sites as $site) {
-                if ($url = (string)$site['loc']) {
+                if(isset($site['loc'])){
+                    $url = (string)$site['loc'];
+                } else {
+                    $url = $site;
+                }
+                if (GeneralUtility::isValidUrl($url)) {
                     $params = GeneralUtility::explodeUrl2Array(parse_url($url)['query']);
                     if (array_key_exists('sitemap', $params) || (int)$params['type'] === 1533906435) {
                         $this->getUrlListFromSiteMap($url);
