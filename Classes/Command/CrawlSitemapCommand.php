@@ -7,7 +7,6 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use TYPO3\CMS\Core\Error\Exception;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class CrawlSitemapCommand extends Command
@@ -18,9 +17,19 @@ class CrawlSitemapCommand extends Command
     protected $urls = [];
 
     /**
+     * @var int
+     */
+    protected $sitemapCount = 0;
+
+    /**
      * @var array
      */
-    private $errors = [];
+    protected $errors = [];
+
+    /**
+     * @var array
+     */
+    protected $requestHeaders = [];
 
     /**
      * Configure the command by defining the name, options and arguments
@@ -43,56 +52,46 @@ class CrawlSitemapCommand extends Command
     /**
      * @param InputInterface $input
      * @param OutputInterface $output
+     * @return int
      */
-    protected function execute(InputInterface $input, OutputInterface $output): void
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $requestHeaders = null;
         $url = (string)$input->getArgument('url');
         $output->writeln('Sitemap url: ' . $url, OutputInterface::VERBOSITY_VERBOSE);
 
         // Validate input url
         if (!GeneralUtility::isValidUrl($url)) {
             $output->writeln('Error: Invalid url');
-            return;
+            return 1;
+        }
+
+        // Set headers from argument
+        if ($input->getArgument('headers')) {
+            $this->requestHeaders = json_decode($input->getArgument('headers'), true);
+            $output->writeln('Headers: ' . var_export($this->requestHeaders, true), OutputInterface::VERBOSITY_DEBUG);
         }
 
         // Fetch urls
-        $this->getUrlListFromSiteMap($url);
+        $this->getUrlListFromSitemap($url);
         if ($this->errors) {
             $this->printErrors($output);
-            return;
+            return 1;
         }
 
         // Return on empty urls
         if (!$this->urls) {
             $output->writeln('No urls found');
-            return;
+            return 1;
         }
-        $output->writeln('Found ' . count($this->urls) . ' urls to crawl');
+
+        // Display url and sitemap count
+        $output->writeln('Found ' . count($this->urls) . ' url(s) in ' . $this->sitemapCount . ' sitemap(s)');
+
         // Show urls in debug mode
         $output->writeln('Urls: ' . var_export($this->urls, true), OutputInterface::VERBOSITY_DEBUG);
 
-        // Set headers from argument
-        if ($input->getArgument('headers')) {
-            $requestHeaders = json_decode($input->getArgument('headers'), true);
-            $output->writeln('Headers: ' . var_export($requestHeaders, true), OutputInterface::VERBOSITY_DEBUG);
-        }
-
-        // Init progress bar
-        $progressBar = new ProgressBar($output, count($this->urls));
-
-        //check if sitemap has sub sitemaps
-        foreach ($this->urls as $url) {
-            GeneralUtility::getUrl($url, 2, $requestHeaders, $error);
-            if ($error) {
-                $this->errors[] = $error;
-            }
-            $progressBar->advance();
-        }
-
-        // Stop progress bar
-        // @extensionScannerIgnoreLine
-        $progressBar->finish();
+        // Process url list
+        $this->processUrlList($output);
 
         // Print errors or success
         if ($this->errors) {
@@ -101,6 +100,7 @@ class CrawlSitemapCommand extends Command
         } else {
             $output->writeln(' Completed successfully!');
         }
+        return 0;
     }
 
     /**
@@ -119,31 +119,92 @@ class CrawlSitemapCommand extends Command
         $this->errors = [];
     }
 
+    protected function processUrlList(OutputInterface $output): void
+    {
+        // Init progress bar
+        $progressBar = new ProgressBar($output, count($this->urls));
+
+        //check if sitemap has sub sitemaps
+        foreach ($this->urls as $url) {
+            GeneralUtility::getUrl($url, 2, $this->requestHeaders, $error);
+            if ($error) {
+                $this->errors[] = $error;
+            }
+            $progressBar->advance();
+        }
+
+        // Stop progress bar
+        // @extensionScannerIgnoreLine
+        $progressBar->finish();
+    }
+
     /**
      * Fetch sitemap from url, parse xml and create list with urls
      *
-     * @param string $siteMapUrl
+     * @param string $url
      */
-    protected function getUrlListFromSiteMap(string $siteMapUrl): void
+    protected function getUrlListFromSitemap(string $url): void
     {
-        try {
-            $xml = simplexml_load_string(GeneralUtility::getUrl($siteMapUrl));
-        } catch (Exception $e) {
-            $this->errors[] = ['error' => $e->getCode(), 'message' => $e->getMessage()];
-            return;
-        }
-        $siteMap = json_decode(json_encode($xml), true) ?: [];
-        if (($sites = $siteMap['sitemap']) || ($sites = $siteMap['url'])) {
-            foreach ($sites as $site) {
-                if ($url = (string)$site['loc']) {
-                    $params = GeneralUtility::explodeUrl2Array(parse_url($url)['query']);
-                    if (array_key_exists('sitemap', $params) || (int)$params['type'] === 1533906435) {
-                        $this->getUrlListFromSiteMap($url);
-                    } else {
-                        $this->urls[] = $url;
-                    }
+        $arr = $this->getArrayFromUrl($url);
+
+        if (is_array($arr['sitemap']) && !empty($arr['sitemap'])) {
+            // Check for single entry
+            if (isset($arr['sitemap']['loc'])) {
+                $this->addSitemap((string)$arr['sitemap']['loc']);
+            } else {
+                // Handle multiple entries
+                foreach ($arr['sitemap'] as $sitemap) {
+                    $this->addSitemap((string)$sitemap['loc']);
                 }
             }
+        }
+        elseif (is_array($arr['url']) && !empty($arr['url'])) {
+            // Check for single entry
+            if (isset($arr['url']['loc'])) {
+                $this->addUrl((string)$arr['url']['loc']);
+            } else {
+                // Handle multiple entries
+                foreach ($arr['url'] as $site) {
+                    $this->addUrl((string)$site['loc']);
+                }
+            }
+        }
+    }
+
+    protected function getArrayFromUrl(string $url): array
+    {
+        try {
+            $xml = simplexml_load_string(GeneralUtility::getUrl($url));
+        } catch (\Exception $e) {
+            $this->errors[] = ['error' => $e->getCode(), 'message' => $e->getMessage()];
+            return [];
+        }
+        // Convert SimpleXML Objects to associative array
+        return json_decode(json_encode($xml), true) ?: [];
+    }
+
+    /**
+     * Validate url and parse sitemap content
+     *
+     * @param string $url
+     */
+    protected function addSitemap(string $url): void
+    {
+        if (GeneralUtility::isValidUrl($url)) {
+            $this->sitemapCount++;
+            $this->getUrlListFromSitemap($url);
+        }
+    }
+
+    /**
+     * Validate url and add it to the urls array which is parsed later on
+     *
+     * @param string $url
+     */
+    protected function addUrl(string $url): void
+    {
+        if (GeneralUtility::isValidUrl($url)) {
+            $this->urls[] = $url;
         }
     }
 }
