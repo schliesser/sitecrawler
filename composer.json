@@ -2,10 +2,6 @@
   "name": "schliesser/sitecrawler",
   "description": "TYPO3 sitemap crawler",
   "type": "typo3-cms-extension",
-  "require": {
-    "typo3/cms-core": "^9.5 || ^10.4",
-    "ext-simplexml": "*"
-  },
   "license": "MIT",
   "authors": [
     {
@@ -14,9 +10,56 @@
       "role": "Developer"
     }
   ],
+  "require": {
+    "typo3/cms-core": "^9.5 || ^10.4",
+    "ext-simplexml": "*"
+  },
+  "require-dev": {
+    "friendsofphp/php-cs-fixer": "^2.16",
+    "php-parallel-lint/php-parallel-lint": "^1.2",
+    "typo3/testing-framework": "^4 || ^5"
+  },
   "autoload": {
     "psr-4": {
       "Schliesser\\Sitecrawler\\": "Classes"
+    }
+  },
+  "config": {
+    "vendor-dir": ".Build/vendor",
+    "bin-dir": ".Build/bin"
+  },
+  "scripts": {
+    "test": [
+      "@test-php-lint",
+      "@test-php-cs-fixer",
+      "@test-unit",
+      "@test-functional"
+    ],
+    "post-autoload-dump": [
+      "TYPO3\\TestingFramework\\Composer\\ExtensionTestEnvironment::prepare"
+    ],
+    "test-php-lint": [
+      ".Build/bin/parallel-lint ./Classes/",
+      ".Build/bin/parallel-lint ./Configuration/",
+      ".Build/bin/parallel-lint ./Tests/"
+    ],
+    "test-php-cs-fixer": [
+      "php-cs-fixer fix -v --dry-run --using-cache false --diff --diff-format=udiff"
+    ],
+    "test-php-cs-fixer-fix": [
+      "php-cs-fixer fix -v --using-cache false"
+    ],
+    "test-unit": [
+      ".Build/bin/phpunit --configuration Tests/Unit/phpunit.xml"
+    ],
+    "test-functional": [
+      ".Build/bin/phpunit --configuration Tests/Functional/phpunit.xml"
+    ]
+  },
+  "extra": {
+    "typo3/cms": {
+      "web-dir": ".Build",
+      "extension-key": "sitecrawler"
     }
   },
   "replace": {

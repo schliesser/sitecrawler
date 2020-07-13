@@ -1,3 +1,9 @@
 .DS_Store
-
-/vendor/
+*.iml
+.php_cs.cache
+.idea/
+.Build/
+public/
+vendor/
+composer.lock
+**/.phpunit.result.cache

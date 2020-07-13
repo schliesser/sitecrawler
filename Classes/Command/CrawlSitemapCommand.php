@@ -2,8 +2,8 @@
 
 namespace Schliesser\Sitecrawler\Command;
 
-use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -46,7 +46,8 @@ class CrawlSitemapCommand extends Command
             ->addArgument(
                 'headers',
                 InputArgument::OPTIONAL,
-                'Request header arguments in json format. Example: \'{"X-Pjax": true, "Cache-Control": "no-cache"}\'');
+                'Request header arguments in json format. Example: \'{"X-Pjax": true, "Cache-Control": "no-cache"}\''
+            );
     }
 
     /**
@@ -157,8 +158,7 @@ class CrawlSitemapCommand extends Command
                     $this->addSitemap((string)$sitemap['loc']);
                 }
             }
-        }
-        elseif (is_array($arr['url']) && !empty($arr['url'])) {
+        } elseif (is_array($arr['url']) && !empty($arr['url'])) {
             // Check for single entry
             if (isset($arr['url']['loc'])) {
                 $this->addUrl((string)$arr['url']['loc']);
