@@ -76,13 +76,13 @@ class CrawlSitemapCommand extends Command
         $this->getUrlListFromSitemap($url);
         if ($this->errors) {
             $this->printErrors($output);
-            return 1;
+            return 2;
         }
 
         // Return on empty urls
         if (!$this->urls) {
             $output->writeln('No urls found');
-            return 1;
+            return 3;
         }
 
         // Display url and sitemap count
@@ -148,7 +148,7 @@ class CrawlSitemapCommand extends Command
     {
         $arr = $this->getArrayFromUrl($url);
 
-        if (is_array($arr['sitemap']) && !empty($arr['sitemap'])) {
+        if (isset($arr['sitemap']) && is_array($arr['sitemap']) && !empty($arr['sitemap'])) {
             // Check for single entry
             if (isset($arr['sitemap']['loc'])) {
                 $this->addSitemap((string)$arr['sitemap']['loc']);
@@ -158,7 +158,7 @@ class CrawlSitemapCommand extends Command
                     $this->addSitemap((string)$sitemap['loc']);
                 }
             }
-        } elseif (is_array($arr['url']) && !empty($arr['url'])) {
+        } elseif (isset($arr['sitemap']) && is_array($arr['url']) && !empty($arr['url'])) {
             // Check for single entry
             if (isset($arr['url']['loc'])) {
                 $this->addUrl((string)$arr['url']['loc']);
