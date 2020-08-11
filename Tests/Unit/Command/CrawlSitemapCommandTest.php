@@ -1,9 +1,8 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
-
-namespace Schliesser\Sitecrawler\Tests\Unit\Command;
+namespace Schliesser\Sitecrawler\Test\Unit\Command;
 
 /*
  * This file is part of the sitecrawler extension for TYPO3 CMS.
@@ -12,25 +11,22 @@ namespace Schliesser\Sitecrawler\Tests\Unit\Command;
  * LICENSE.txt file that was distributed with this source code.
  */
 
-use PHPUnit\Framework\MockObject\MockObject;
 use Prophecy\Prophecy\ObjectProphecy;
 use Schliesser\Sitecrawler\Command\CrawlSitemapCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\TestingFramework\Core\AccessibleObjectInterface;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 /**
  * Class CrawlSitemapCommandTest
- * @package Schliesser\Sitecrawler\Tests\Unit\Command
  */
 class CrawlSitemapCommandTest extends UnitTestCase
 {
     /**
      * @test
      */
-    public function executeWillStopBeforeHeaderArgumentOnEmptyUrlArgument()
+    public function executeWillStopBeforeHeaderArgumentOnEmptyUrlArgument(): void
     {
         /** @var CrawlSitemapCommand|AccessibleObjectInterface $mockedCrawlSitemapCommand */
         $mockedCrawlSitemapCommand = $this->getAccessibleMock(CrawlSitemapCommand::class, ['dummy'], [], '', false);
@@ -40,13 +36,14 @@ class CrawlSitemapCommandTest extends UnitTestCase
         $input->getArgument('url')->shouldBeCalled();
         $input->getArgument('header')->shouldNotBeCalled();
 
-        $mockedCrawlSitemapCommand->_call('execute', $input->reveal(), $this->prophesize(OutputInterface::class)->reveal());
+        $result = $mockedCrawlSitemapCommand->_call('execute', $input->reveal(), $this->prophesize(OutputInterface::class)->reveal());
+        self::assertEquals(1, $result);
     }
 
     /**
      * @test
      */
-    public function executeWillExitOnErrorsWith2()
+    public function executeWillExitOnErrorsWith2(): void
     {
         $url = 'https://domain.tld/foo/bar';
 
@@ -59,6 +56,6 @@ class CrawlSitemapCommandTest extends UnitTestCase
         $input->getArgument('headers')->willReturn('');
 
         $result = $mockedCrawlSitemapCommand->_call('execute', $input->reveal(), $this->prophesize(OutputInterface::class)->reveal());
-        $this->assertEquals(2,$result);
+        self::assertEquals(2, $result);
     }
 }

@@ -98,9 +98,10 @@ class CrawlSitemapCommand extends Command
         if ($this->errors) {
             $output->writeln(' Finished with some errors!');
             $this->printErrors($output);
-        } else {
-            $output->writeln(' Completed successfully!');
+            return 4;
         }
+
+        $output->writeln(' Completed successfully!');
         return 0;
     }
 
