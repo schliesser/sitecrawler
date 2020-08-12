@@ -32,8 +32,7 @@
     "test": [
       "@test-php-lint",
       "@test-php-cs-fixer",
-      "@test-unit",
-      "@test-functional"
+      "@test-unit"
     ],
     "post-autoload-dump": [
       "TYPO3\\TestingFramework\\Composer\\ExtensionTestEnvironment::prepare"
@@ -51,9 +50,6 @@
     ],
     "test-unit": [
       ".Build/bin/phpunit --configuration Tests/Unit/phpunit.xml"
-    ],
-    "test-functional": [
-      ".Build/bin/phpunit --configuration Tests/Functional/phpunit.xml"
     ]
   },
   "extra": {

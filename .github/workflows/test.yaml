@@ -97,6 +97,3 @@ jobs:
 
             - name: "Run Unit tests"
               run: composer run-script test-unit
-
-            - name: "Functional tests"
-              run: composer run-script test-functional

@@ -159,7 +159,7 @@ class CrawlSitemapCommand extends Command
                     $this->addSitemap((string)$sitemap['loc']);
                 }
             }
-        } elseif (isset($arr['sitemap']) && is_array($arr['url']) && !empty($arr['url'])) {
+        } elseif (isset($arr['url']) && is_array($arr['url']) && !empty($arr['url'])) {
             // Check for single entry
             if (isset($arr['url']['loc'])) {
                 $this->addUrl((string)$arr['url']['loc']);
