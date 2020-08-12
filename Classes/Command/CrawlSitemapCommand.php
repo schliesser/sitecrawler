@@ -130,9 +130,13 @@ class CrawlSitemapCommand extends Command
 
         // Process url list
         foreach ($progressBar->iterate($this->urls) as $url) {
-            GeneralUtility::getUrl($url, 2, $this->requestHeaders, $error);
-            if ($error) {
-                $this->errors[] = $error;
+            try {
+                GeneralUtility::getUrl($url, 2, $this->requestHeaders, $error);
+                if ($error) {
+                    $this->errors[] = $error;
+                }
+            } catch (\Exception $e) {
+                $this->errors[] = ['error' => $e->getCode(), 'message' => $e->getMessage()];
             }
         }
 
