@@ -27,9 +27,11 @@ class CrawlSitemapCommand extends Command
     protected $errors = [];
 
     /**
-     * @var array
+     * @var array|null
+     * Default: null
+     * Empty array triggers deprecation error in TYPO3 9.5...
      */
-    protected $requestHeaders = [];
+    protected $requestHeaders;
 
     /**
      * Configure the command by defining the name, options and arguments
@@ -124,15 +126,14 @@ class CrawlSitemapCommand extends Command
     protected function processUrlList(OutputInterface $output): void
     {
         // Init progress bar
-        $progressBar = new ProgressBar($output, count($this->urls));
+        $progressBar = new ProgressBar($output);
 
-        //check if sitemap has sub sitemaps
-        foreach ($this->urls as $url) {
+        // Process url list
+        foreach ($progressBar->iterate($this->urls) as $url) {
             GeneralUtility::getUrl($url, 2, $this->requestHeaders, $error);
             if ($error) {
                 $this->errors[] = $error;
             }
-            $progressBar->advance();
         }
 
         // Stop progress bar
