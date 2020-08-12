@@ -2,8 +2,8 @@
 
 namespace Schliesser\Sitecrawler\Command;
 
-use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -27,9 +27,11 @@ class CrawlSitemapCommand extends Command
     protected $errors = [];
 
     /**
-     * @var array
+     * @var array|null
+     * Default: null
+     * Empty array triggers deprecation error in TYPO3 9.5...
      */
-    protected $requestHeaders = [];
+    protected $requestHeaders;
 
     /**
      * Configure the command by defining the name, options and arguments
@@ -46,7 +48,8 @@ class CrawlSitemapCommand extends Command
             ->addArgument(
                 'headers',
                 InputArgument::OPTIONAL,
-                'Request header arguments in json format. Example: \'{"X-Pjax": true, "Cache-Control": "no-cache"}\'');
+                'Request header arguments in json format. Example: \'{"X-Pjax": true, "Cache-Control": "no-cache"}\''
+            );
     }
 
     /**
@@ -75,13 +78,13 @@ class CrawlSitemapCommand extends Command
         $this->getUrlListFromSitemap($url);
         if ($this->errors) {
             $this->printErrors($output);
-            return 1;
+            return 2;
         }
 
         // Return on empty urls
         if (!$this->urls) {
             $output->writeln('No urls found');
-            return 1;
+            return 3;
         }
 
         // Display url and sitemap count
@@ -97,9 +100,10 @@ class CrawlSitemapCommand extends Command
         if ($this->errors) {
             $output->writeln(' Finished with some errors!');
             $this->printErrors($output);
-        } else {
-            $output->writeln(' Completed successfully!');
+            return 4;
         }
+
+        $output->writeln(' Completed successfully!');
         return 0;
     }
 
@@ -122,15 +126,18 @@ class CrawlSitemapCommand extends Command
     protected function processUrlList(OutputInterface $output): void
     {
         // Init progress bar
-        $progressBar = new ProgressBar($output, count($this->urls));
+        $progressBar = new ProgressBar($output);
 
-        //check if sitemap has sub sitemaps
-        foreach ($this->urls as $url) {
-            GeneralUtility::getUrl($url, 2, $this->requestHeaders, $error);
-            if ($error) {
-                $this->errors[] = $error;
+        // Process url list
+        foreach ($progressBar->iterate($this->urls) as $url) {
+            try {
+                GeneralUtility::getUrl($url, 2, $this->requestHeaders, $error);
+                if ($error) {
+                    $this->errors[] = $error;
+                }
+            } catch (\Exception $e) {
+                $this->errors[] = ['error' => $e->getCode(), 'message' => $e->getMessage()];
             }
-            $progressBar->advance();
         }
 
         // Stop progress bar
@@ -147,7 +154,7 @@ class CrawlSitemapCommand extends Command
     {
         $arr = $this->getArrayFromUrl($url);
 
-        if (is_array($arr['sitemap']) && !empty($arr['sitemap'])) {
+        if (isset($arr['sitemap']) && is_array($arr['sitemap']) && !empty($arr['sitemap'])) {
             // Check for single entry
             if (isset($arr['sitemap']['loc'])) {
                 $this->addSitemap((string)$arr['sitemap']['loc']);
@@ -157,8 +164,7 @@ class CrawlSitemapCommand extends Command
                     $this->addSitemap((string)$sitemap['loc']);
                 }
             }
-        }
-        elseif (is_array($arr['url']) && !empty($arr['url'])) {
+        } elseif (isset($arr['url']) && is_array($arr['url']) && !empty($arr['url'])) {
             // Check for single entry
             if (isset($arr['url']['loc'])) {
                 $this->addUrl((string)$arr['url']['loc']);
