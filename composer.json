@@ -57,8 +57,5 @@
       "web-dir": ".Build",
       "extension-key": "sitecrawler"
     }
-  },
-  "replace": {
-    "schliesser/sitecrawler": "self.version"
   }
 }
