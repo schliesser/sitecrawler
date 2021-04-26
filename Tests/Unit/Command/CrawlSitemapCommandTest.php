@@ -100,30 +100,37 @@ class CrawlSitemapCommandTest extends UnitTestCase
         return [
             [
                 // Sitemap with single url
-                'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/83c57e5eee37baf0c07d6c9b8c9c2cf8da920fd8/sitemap-1.xml',
+                'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/sitemap-1.xml',
                 0, // Sitemaps
                 1, // Urls
                 0, // Command exit value
             ],
             [
                 // Sitemap with multiple urls
-                'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/83c57e5eee37baf0c07d6c9b8c9c2cf8da920fd8/sitemap-2.xml',
+                'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/sitemap-2.xml',
                 0, // Sitemaps
                 2, // Urls
                 0, // Command exit value
             ],
             [
                 // Sitemap index with single sitemap
-                'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/7ba391c93119a9dc93a85a3a4b1aabd4dba36de5/sitemap-index-1.xml',
+                'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/sitemap-index-1.xml',
                 1, // Sitemaps
                 1, // Urls
                 0, // Command exit value
             ],
             [
                 // Sitemap index with multiple sitemaps
-                'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/7ba391c93119a9dc93a85a3a4b1aabd4dba36de5/sitemap-index-2.xml',
+                'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/sitemap-index-2.xml',
                 2, // Sitemaps
                 3, // Urls
+                0, // Command exit value
+            ],
+            [
+                // Sitemap index with multiple sitemaps
+                'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/robots.txt',
+                3, // Sitemaps
+                7, // Urls
                 0, // Command exit value
             ],
         ];

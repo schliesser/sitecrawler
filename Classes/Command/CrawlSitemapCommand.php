@@ -74,8 +74,9 @@ class CrawlSitemapCommand extends Command
             $output->writeln('Headers: ' . var_export($this->requestHeaders, true), OutputInterface::VERBOSITY_DEBUG);
         }
 
+        $output->writeln('Gathering urls for crawling ...');
         // Fetch urls
-        $this->getUrlListFromSitemap($url);
+        $this->processUrl($url);
         if ($this->errors) {
             $this->printErrors($output);
             return 2;
@@ -145,6 +146,29 @@ class CrawlSitemapCommand extends Command
         $progressBar->finish();
     }
 
+    protected function processUrl(string $url): void
+    {
+        $urlData = parse_url($url);
+        $robotsUrl = false;
+
+        // Read robots.txt file if the urls path is /robots.txt
+        if ($urlData['path'] === '/robots.txt') {
+            $robotsUrl = true;
+        } elseif ($urlData['path'] === '/' || !$urlData['path']) {
+            // No path / empty path: use robots.txt file
+            // robots.txt needs to be on root always
+            $url = $urlData['scheme'] . '://' . $urlData['host'] . ($urlData['port'] ? ':' . $urlData['port'] : '') . '/robots.txt';
+            $robotsUrl = true;
+        }
+        if ($robotsUrl && !empty($sitemaps = $this->readRobotsTxt($url))) {
+            foreach ($sitemaps as $sitemap) {
+                $this->getUrlListFromSitemap($sitemap);
+            }
+        } else {
+            $this->getUrlListFromSitemap($url);
+        }
+    }
+
     /**
      * Fetch sitemap from url, parse xml and create list with urls
      *
@@ -175,6 +199,18 @@ class CrawlSitemapCommand extends Command
                 }
             }
         }
+    }
+
+    protected function readRobotsTxt(string $robotsTxtUrl): array
+    {
+        // Fetch sitemap urls form robots.txt
+        $content = GeneralUtility::getUrl($robotsTxtUrl);
+        $sitemaps = [];
+        preg_match_all('/^Sitemap: (.*)/m', $content, $matches, PREG_PATTERN_ORDER);
+        foreach ($matches[1] as $url) {
+            $sitemaps[] = trim($url);
+        }
+        return $sitemaps;
     }
 
     protected function getArrayFromUrl(string $url): array

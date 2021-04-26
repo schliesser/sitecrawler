@@ -17,3 +17,9 @@ Non composer:
 ```bash
 typo3/sysext/core/bin/typo3 sitecrawler:crawl 'https://www.example.com/sitemap.xml'
 ```
+
+## Development
+
+- Clone project and `cd` into the extension folder
+- Install dependencies for tests: `composer install`
+- Run tests with: `composer run test`
