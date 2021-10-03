@@ -5,7 +5,7 @@
   "license": "MIT",
   "authors": [
     {
-      "name": "André Schließer",
+      "name": "André Buchmann",
       "email": "andy.schliesser@gmail.com",
       "role": "Developer"
     }
@@ -50,6 +50,16 @@
     ],
     "test-unit": [
       ".Build/bin/phpunit --configuration Tests/Unit/phpunit.xml"
+    ],
+    "prepare-release": [
+      "rm .gitignore",
+      "rm -rf .Build",
+      "rm -rf .github",
+      "rm -rf Tests",
+      "rm .editorconfig",
+      "rm .gitattributes",
+      "rm .php-cs-fixer.php",
+      "rm .php_cs.dist"
     ]
   },
   "extra": {
