@@ -15,7 +15,7 @@
     "ext-simplexml": "*"
   },
   "require-dev": {
-    "friendsofphp/php-cs-fixer": "^2.16",
+    "friendsofphp/php-cs-fixer": "^3.0",
     "php-parallel-lint/php-parallel-lint": "^1.2",
     "typo3/testing-framework": "^4 || ^5 || ^6"
   },
@@ -43,10 +43,10 @@
       ".Build/bin/parallel-lint ./Tests/"
     ],
     "test-php-cs-fixer": [
-      "php-cs-fixer fix -v --dry-run --using-cache false --diff --diff-format=udiff"
+      "php-cs-fixer fix -v --dry-run --using-cache no --diff"
     ],
     "test-php-cs-fixer-fix": [
-      "php-cs-fixer fix -v --using-cache false"
+      "php-cs-fixer fix -v --using-cache no"
     ],
     "test-unit": [
       ".Build/bin/phpunit --configuration Tests/Unit/phpunit.xml"
