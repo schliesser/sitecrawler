@@ -59,41 +59,42 @@ jobs:
         strategy:
             max-parallel: 2
             matrix:
-                php-versions: [7.2, 7.3, 7.4, 8.0]
-                typo3-versions:
-                    - {typo3: 9, testing: 4}
-                    - {typo3: 10, testing: 5}
-                    - {typo3: 11, testing: 5}
+                variants:
+                    - {typo3: 9, testing: 4, php: 7.2}
+                    - {typo3: 10, testing: 5, php: 7.3}
+                    - {typo3: 10, testing: 5, php: 7.4}
+                    - {typo3: 11, testing: 6, php: 7.4}
+                    - {typo3: 11, testing: 6, php: 8.0}
 
-        name: "Run tests with PHP ${{ matrix.php-versions }}
-          using TYPO3 ${{ matrix.typo3-versions.typo3 }}
-          with testing framework version ${{ matrix.typo3-versions.testing }}"
+        name: "Run tests with PHP ${{ matrix.variants.php }}
+          using TYPO3 ${{ matrix.variants.typo3 }}
+          with testing framework version ${{ matrix.variants.testing }}"
         steps:
             - uses: actions/checkout@v2
 
             - uses: shivammathur/setup-php@v2
               with:
-                  php-version: ${{ matrix.php-versions }}
+                  php-version: ${{ matrix.variants.php }}
                   extensions: xml, mbstring, curl
 
             - name: "Cache composer dependencies"
               uses: actions/cache@v1
               with:
                   path: ~/.composer/cache
-                  key: php-${{ matrix.php-versions }}
-                      -typo3-${{ matrix.typo3-versions.typo3 }}
-                      -testing-${{ matrix.typo3-versions.testing }}
+                  key: php-${{ matrix.variants.php }}
+                      -typo3-${{ matrix.variants.typo3 }}
+                      -testing-${{ matrix.variants.testing }}
                       -composer-${{ hashFiles('composer.json') }}
                   restore-keys: |
-                      php-${{ matrix.php-versions }}
-                      -typo3-${{ matrix.typo3-versions.typo3 }}
-                      -testing-${{ matrix.typo3-versions.testing }}composer-
-                      php-${{ matrix.php-versions }}-typo3-
+                      php-${{ matrix.variants.php }}
+                      -typo3-${{ matrix.variants.typo3 }}
+                      -testing-${{ matrix.variants.testing }}composer-
+                      php-${{ matrix.variants.php }}-typo3-
 
             - name: "Install composer dependencies"
               run: composer require typo3/minimal
-                  "^${{ matrix.typo3-versions.typo3 }}"
-                  typo3/testing-framework "^${{ matrix.typo3-versions.testing }}"
+                  "^${{ matrix.variants.typo3 }}"
+                  typo3/testing-framework "^${{ matrix.variants.testing }}"
                   --prefer-dist --no-progress --no-suggest
 
             - name: "Run Unit tests"
