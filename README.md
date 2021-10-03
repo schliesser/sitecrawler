@@ -4,6 +4,8 @@ This extension provides a Symfony command to crawl the sitemap including all sub
 
 You can provide custom request headers in json format.
 
+Since version 1.1.0 the sitecrawler can read `robots.txt` files to fetch all defined sitemaps from it.
+
 ## Examples
 
 Composer based:
