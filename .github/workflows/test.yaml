@@ -9,7 +9,7 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                php-versions: [7.2, 7.3, 7.4]
+                php-versions: [7.2, 7.3, 7.4, 8.0]
         steps:
             - name: Checkout
               uses: actions/checkout@v1
@@ -59,10 +59,11 @@ jobs:
         strategy:
             max-parallel: 2
             matrix:
-                php-versions: [7.2, 7.3, 7.4]
+                php-versions: [7.2, 7.3, 7.4, 8.0]
                 typo3-versions:
                     - {typo3: 9, testing: 4}
                     - {typo3: 10, testing: 5}
+                    - {typo3: 11, testing: 5}
 
         name: "Run tests with PHP ${{ matrix.php-versions }}
           using TYPO3 ${{ matrix.typo3-versions.typo3 }}

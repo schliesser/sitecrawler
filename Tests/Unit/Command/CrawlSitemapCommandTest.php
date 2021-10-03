@@ -25,22 +25,22 @@ use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 class CrawlSitemapCommandTest extends UnitTestCase
 {
     /**
-     * @var CrawlSitemapCommand|AccessibleObjectInterface $mockedCrawlSitemapCommand
+     * @var CrawlSitemapCommand|AccessibleObjectInterface
      */
     protected $mockedCommand;
 
     /**
-     * @var InputInterface|ObjectProphecy $input
+     * @var InputInterface|ObjectProphecy
      */
     protected $input;
 
     /**
-     * @var OutputInterface|ObjectProphecy $input
+     * @var OutputInterface|ObjectProphecy
      */
     protected $output;
 
     /**
-     * setUp function
+     * Setup function
      */
     protected function setUp(): void
     {
@@ -139,10 +139,6 @@ class CrawlSitemapCommandTest extends UnitTestCase
     /**
      * @dataProvider sitemapSamples
      * @test
-     * @param string $url
-     * @param int $sitemapCount
-     * @param int $urlCount
-     * @param int $exitCode
      */
     public function executeWillExitAfterUrlProcessingWithoutErrors(string $url, int $sitemapCount, int $urlCount, int $exitCode): void
     {

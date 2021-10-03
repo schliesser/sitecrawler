@@ -1,0 +1,11 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    Schliesser\Sitecrawler\Command\CrawlSitemapCommand:
+        tags:
+            - name: 'console.command'
+              command: 'sitecrawler:crawl'
+              description: 'Crawl a sitemap by adding the url behind this command'

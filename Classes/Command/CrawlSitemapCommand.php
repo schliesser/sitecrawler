@@ -27,9 +27,9 @@ class CrawlSitemapCommand extends Command
     protected $errors = [];
 
     /**
-     * @var array|null
-     * Default: null
      * Empty array triggers deprecation error in TYPO3 9.5...
+     *
+     * @var array|null Default: null
      */
     protected $requestHeaders;
 
@@ -52,11 +52,6 @@ class CrawlSitemapCommand extends Command
             );
     }
 
-    /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     * @return int
-     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $url = (string)$input->getArgument('url');
@@ -65,6 +60,7 @@ class CrawlSitemapCommand extends Command
         // Validate input url
         if (!GeneralUtility::isValidUrl($url)) {
             $output->writeln('Error: Invalid url');
+
             return 1;
         }
 
@@ -79,12 +75,14 @@ class CrawlSitemapCommand extends Command
         $this->processUrl($url);
         if ($this->errors) {
             $this->printErrors($output);
+
             return 2;
         }
 
         // Return on empty urls
         if (!$this->urls) {
             $output->writeln('No urls found');
+
             return 3;
         }
 
@@ -101,17 +99,17 @@ class CrawlSitemapCommand extends Command
         if ($this->errors) {
             $output->writeln(' Finished with some errors!');
             $this->printErrors($output);
+
             return 4;
         }
 
         $output->writeln(' Completed successfully!');
+
         return 0;
     }
 
     /**
      * Print errors and reset error storage array
-     *
-     * @param OutputInterface $output
      */
     protected function printErrors(OutputInterface $output): void
     {
@@ -132,9 +130,9 @@ class CrawlSitemapCommand extends Command
         // Process url list
         foreach ($progressBar->iterate($this->urls) as $url) {
             try {
-                GeneralUtility::getUrl($url, 2, $this->requestHeaders, $error);
-                if ($error) {
-                    $this->errors[] = $error;
+                $result = GeneralUtility::getUrl($url);
+                if (!$result) {
+                    $this->errors[] = ['error' => 1633234397666, 'message' => 'Unable to fetch url: "' . $url . '"'];
                 }
             } catch (\Exception $e) {
                 $this->errors[] = ['error' => $e->getCode(), 'message' => $e->getMessage()];
@@ -160,9 +158,11 @@ class CrawlSitemapCommand extends Command
             $url = $urlData['scheme'] . '://' . $urlData['host'] . ($urlData['port'] ? ':' . $urlData['port'] : '') . '/robots.txt';
             $robotsUrl = true;
         }
-        if ($robotsUrl && !empty($sitemaps = $this->readRobotsTxt($url))) {
-            foreach ($sitemaps as $sitemap) {
-                $this->getUrlListFromSitemap($sitemap);
+        if ($robotsUrl) {
+            if (!empty($sitemaps = $this->readRobotsTxt($url))) {
+                foreach ($sitemaps as $sitemap) {
+                    $this->getUrlListFromSitemap($sitemap);
+                }
             }
         } else {
             $this->getUrlListFromSitemap($url);
@@ -171,8 +171,6 @@ class CrawlSitemapCommand extends Command
 
     /**
      * Fetch sitemap from url, parse xml and create list with urls
-     *
-     * @param string $url
      */
     protected function getUrlListFromSitemap(string $url): void
     {
@@ -205,20 +203,33 @@ class CrawlSitemapCommand extends Command
     {
         // Fetch sitemap urls form robots.txt
         $content = GeneralUtility::getUrl($robotsTxtUrl);
+        if (!$content) {
+            $this->errors[] = ['error' => 1633234519166, 'message' => 'Unable to fetch robots.txt'];
+
+            return [];
+        }
         $sitemaps = [];
         preg_match_all('/^Sitemap: (.*)/m', $content, $matches, PREG_PATTERN_ORDER);
         foreach ($matches[1] as $url) {
             $sitemaps[] = trim($url);
         }
+
         return $sitemaps;
     }
 
     protected function getArrayFromUrl(string $url): array
     {
         try {
-            $xml = simplexml_load_string(GeneralUtility::getUrl($url));
+            $data = GeneralUtility::getUrl($url);
+            if ($data === false) {
+                $this->errors[] = ['error' => 1633234217716, 'message' => 'Unable to load xml from url: "' . $url . '"'];
+
+                return [];
+            }
+            $xml = simplexml_load_string($data);
         } catch (\Exception $e) {
             $this->errors[] = ['error' => $e->getCode(), 'message' => $e->getMessage()];
+
             return [];
         }
         // Convert SimpleXML Objects to associative array
@@ -227,21 +238,17 @@ class CrawlSitemapCommand extends Command
 
     /**
      * Validate url and parse sitemap content
-     *
-     * @param string $url
      */
     protected function addSitemap(string $url): void
     {
         if (GeneralUtility::isValidUrl($url)) {
-            $this->sitemapCount++;
+            ++$this->sitemapCount;
             $this->getUrlListFromSitemap($url);
         }
     }
 
     /**
      * Validate url and add it to the urls array which is parsed later on
-     *
-     * @param string $url
      */
     protected function addUrl(string $url): void
     {
