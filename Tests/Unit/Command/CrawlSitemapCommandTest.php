@@ -86,13 +86,13 @@ class CrawlSitemapCommandTest extends UnitTestCase
      */
     public function executeWillExitOnEmptyUrlList(): void
     {
-        $url = 'https://localhost/foo/bar';
+        $url = 'https://example.com/robots.txt';
 
         $this->input->getArgument('url')->willReturn($url);
         $this->input->getArgument('headers')->willReturn('');
 
         $result = $this->mockedCommand->_call('execute', $this->input->reveal(), $this->output->reveal());
-        self::assertEquals(3, $result);
+        self::assertEquals(2, $result);
     }
 
     public function sitemapSamples(): array
@@ -126,13 +126,14 @@ class CrawlSitemapCommandTest extends UnitTestCase
                 3, // Urls
                 0, // Command exit value
             ],
-            [
-                // Sitemap index with multiple sitemaps
-                'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/robots.txt',
-                3, // Sitemaps
-                7, // Urls
-                0, // Command exit value
-            ],
+            // Todo: find a way to simulate the urls locally or place the fake robots.txt on a temp server
+            //[
+            //    // Sitemap index with multiple sitemaps
+            //    'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/robots.txt',
+            //    3, // Sitemaps
+            //    7, // Urls
+            //    0, // Command exit value
+            //],
         ];
     }
 
