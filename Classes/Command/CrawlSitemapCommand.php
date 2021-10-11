@@ -129,13 +129,9 @@ class CrawlSitemapCommand extends Command
 
         // Process url list
         foreach ($progressBar->iterate($this->urls) as $url) {
-            try {
-                $result = GeneralUtility::getUrl($url);
-                if (!$result) {
-                    $this->errors[] = ['error' => 1633234397666, 'message' => 'Unable to fetch url: "' . $url . '"'];
-                }
-            } catch (\Exception $e) {
-                $this->errors[] = ['error' => $e->getCode(), 'message' => $e->getMessage()];
+            $result = $this->getUrl($url);
+            if (!$result) {
+                $this->errors[] = ['error' => 1633234397666, 'message' => 'Unable to fetch url: "' . $url . '"'];
             }
         }
 
@@ -155,7 +151,7 @@ class CrawlSitemapCommand extends Command
         } elseif ($urlData['path'] === '/' || !$urlData['path']) {
             // No path / empty path: use robots.txt file
             // robots.txt needs to be on root always
-            $url = $urlData['scheme'] . '://' . $urlData['host'] . ($urlData['port'] ? ':' . $urlData['port'] : '') . '/robots.txt';
+            $url = $urlData['scheme'] . '://' . $urlData['host'] . (isset($urlData['port']) ? ':' . $urlData['port'] : '') . '/robots.txt';
             $robotsUrl = true;
         }
         if ($robotsUrl) {
@@ -202,7 +198,7 @@ class CrawlSitemapCommand extends Command
     protected function readRobotsTxt(string $robotsTxtUrl): array
     {
         // Fetch sitemap urls form robots.txt
-        $content = GeneralUtility::getUrl($robotsTxtUrl);
+        $content = $this->getUrl($robotsTxtUrl);
         if (!$content) {
             $this->errors[] = ['error' => 1633234519166, 'message' => 'Unable to fetch robots.txt'];
 
@@ -220,8 +216,8 @@ class CrawlSitemapCommand extends Command
     protected function getArrayFromUrl(string $url): array
     {
         try {
-            $data = GeneralUtility::getUrl($url);
-            if ($data === false) {
+            $data = $this->getUrl($url);
+            if (!$data) {
                 $this->errors[] = ['error' => 1633234217716, 'message' => 'Unable to load xml from url: "' . $url . '"'];
 
                 return [];
@@ -255,5 +251,21 @@ class CrawlSitemapCommand extends Command
         if (GeneralUtility::isValidUrl($url)) {
             $this->urls[] = $url;
         }
+    }
+
+    /**
+     * Wrapper for GeneralUtility::getUrl() with catcher for all exceptions
+     *
+     * @return false|mixed|string
+     */
+    public function getUrl(string $url)
+    {
+        try {
+            return GeneralUtility::getUrl($url);
+        } catch (\Exception $e) {
+            $this->errors[] = ['error' => $e->getCode(), 'message' => $e->getMessage()];
+        }
+
+        return false;
     }
 }
