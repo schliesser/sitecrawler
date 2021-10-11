@@ -51,6 +51,9 @@
     "test-unit": [
       ".Build/bin/phpunit --configuration Tests/Unit/phpunit.xml"
     ],
+    "test-unit-coverage": [
+      "XDEBUG_MODE=coverage .Build/bin/phpunit --configuration Tests/Unit/phpunit.xml --coverage-text"
+    ],
     "prepare-release": [
       "rm .gitignore",
       "rm -rf .Build",
