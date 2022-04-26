@@ -183,6 +183,11 @@ class CrawlSitemapCommand extends Command
                 }
             }
         } elseif (isset($arr['url']) && is_array($arr['url']) && !empty($arr['url'])) {
+            // Raise count if a direct sitemap link is given
+            if ($this->sitemapCount === 0) {
+                ++$this->sitemapCount;
+            }
+
             // Check for single entry
             if (isset($arr['url']['loc'])) {
                 $this->addUrl((string)$arr['url']['loc']);
