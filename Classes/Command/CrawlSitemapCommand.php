@@ -7,6 +7,7 @@ use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use TYPO3\CMS\Core\Http\RequestFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class CrawlSitemapCommand extends Command
@@ -27,11 +28,11 @@ class CrawlSitemapCommand extends Command
     protected $errors = [];
 
     /**
-     * Empty array triggers deprecation error in TYPO3 9.5...
-     *
-     * @var array|null Default: null
+     * @var array
      */
-    protected $requestHeaders;
+    protected $requestHeaders = [
+        'User-Agent' => 'TYPO3 sitecrawler',
+    ];
 
     /**
      * Configure the command by defining the name, options and arguments
@@ -48,7 +49,7 @@ class CrawlSitemapCommand extends Command
             ->addArgument(
                 'headers',
                 InputArgument::OPTIONAL,
-                'Request header arguments in json format. Example: \'{"X-Pjax": true, "Cache-Control": "no-cache"}\''
+                "Request header arguments in json format. For basic auth you need to base64 encode user:password in the header.\n Example: '{\"Authorization\": \"Basic dXNlcjpwYXNzd29yZA==\", \"Cache-Control\": \"no-cache\"}'"
             );
     }
 
@@ -66,7 +67,7 @@ class CrawlSitemapCommand extends Command
 
         // Set headers from argument
         if ($input->getArgument('headers')) {
-            $this->requestHeaders = json_decode($input->getArgument('headers'), true);
+            $this->requestHeaders = array_merge($this->requestHeaders, json_decode($input->getArgument('headers'), true, 512, JSON_THROW_ON_ERROR));
             $output->writeln('Headers: ' . var_export($this->requestHeaders, true), OutputInterface::VERBOSITY_DEBUG);
         }
 
@@ -129,7 +130,7 @@ class CrawlSitemapCommand extends Command
 
         // Process url list
         foreach ($progressBar->iterate($this->urls) as $url) {
-            $result = $this->getUrl($url);
+            $result = $this->testUrl($url);
             if (!$result) {
                 $this->errors[] = ['error' => 1633234397666, 'message' => 'Unable to fetch url: "' . $url . '"'];
             }
@@ -258,14 +259,31 @@ class CrawlSitemapCommand extends Command
      *
      * @return false|mixed|string
      */
-    public function getUrl(string $url)
+    protected function getUrl(string $url)
     {
         try {
-            return GeneralUtility::getUrl($url);
+            $requestFactory = GeneralUtility::makeInstance(RequestFactory::class);
+            $response = $requestFactory->request($url, 'GET', ['headers' => $this->requestHeaders ?? []]);
+
+            return $response->getBody()->getContents();
         } catch (\Exception $e) {
             $this->errors[] = ['error' => $e->getCode(), 'message' => $e->getMessage()];
-        }
 
-        return false;
+            return false;
+        }
+    }
+
+    protected function testUrl(string $url)
+    {
+        try {
+            $requestFactory = GeneralUtility::makeInstance(RequestFactory::class);
+            $response = $requestFactory->request($url, 'HEAD', ['headers' => $this->requestHeaders ?? []]);
+
+            return $response->getHeaders();
+        } catch (\Exception $e) {
+            $this->errors[] = ['error' => $e->getCode(), 'message' => $e->getMessage()];
+
+            return false;
+        }
     }
 }
