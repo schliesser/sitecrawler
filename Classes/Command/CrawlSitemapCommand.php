@@ -87,7 +87,7 @@ class CrawlSitemapCommand extends Command
         }
 
         // Display url and sitemap count
-        $output->writeln('Found ' . count($this->urls) . ' url(s) in ' . $this->sitemapCount . ' sitemap(s)');
+        $output->writeln('Found ' . count($this->urls) . ' url(s)' . ($this->sitemapCount ? ' in ' . $this->sitemapCount . ' sitemap(s)' : ''));
 
         // Show urls in debug mode
         $output->writeln('Urls: ' . var_export($this->urls, true), OutputInterface::VERBOSITY_DEBUG);
