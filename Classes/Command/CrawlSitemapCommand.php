@@ -148,7 +148,7 @@ class CrawlSitemapCommand extends Command
         // Read robots.txt file if the urls path is /robots.txt
         if ($urlData['path'] === '/robots.txt') {
             $robotsUrl = true;
-        } elseif ($urlData['path'] === '/' || !$urlData['path']) {
+        } elseif ((empty($urlData['path']) || $urlData['path'] === '/') && empty($urlData['query'])) {
             // No path / empty path: use robots.txt file
             // robots.txt needs to be on root always
             $url = $urlData['scheme'] . '://' . $urlData['host'] . (isset($urlData['port']) ? ':' . $urlData['port'] : '') . '/robots.txt';
