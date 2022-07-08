@@ -1,6 +1,6 @@
 # TYPO3 Sitemap crawler
 
-This extension provides a Symfony command to crawl the sitemap including all sub sitemaps. It gathers all available urls and then calls each url to warm up the TYPO3 page cache.
+This extension provides a Symfony command to crawl any sitemap including all sub sitemaps. It gathers all available urls and then calls each url. This way you can warm up the TYPO3 page cache. Any standard sitemap can be crawled: TYPO3, Shopware, ...
 
 You can provide custom request headers in json format.
 
