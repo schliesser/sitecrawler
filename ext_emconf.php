@@ -6,12 +6,12 @@ $EM_CONF[$_EXTKEY] = [
     'category' => 'be',
     'author' => 'André Buchmann',
     'author_email' => 'andy.schliesser@gmail.com',
-    'state' => 'stable',
+    'state' => 'rc',
     'clearCacheOnLoad' => false,
-    'version' => '1.1.2',
+    'version' => '2.0.0-rc1',
     'constraints' => [
         'depends' => [
-            'typo3' => '9.5.0-11.5.99',
+            'typo3' => '10.4.0-11.5.99',
         ],
     ],
 ];
