@@ -51,7 +51,6 @@
     ],
     "test-php-lint": [
       ".Build/bin/parallel-lint ./Classes/",
-      ".Build/bin/parallel-lint ./Configuration/",
       ".Build/bin/parallel-lint ./Tests/"
     ],
     "test-php-cs-fixer": [
