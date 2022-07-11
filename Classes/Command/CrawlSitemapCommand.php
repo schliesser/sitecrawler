@@ -2,35 +2,25 @@
 
 namespace Schliesser\Sitecrawler\Command;
 
+use Schliesser\Sitecrawler\Exception\InvalidFormatException;
+use Schliesser\Sitecrawler\Exception\InvalidUrlException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Http\RequestFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class CrawlSitemapCommand extends Command
 {
-    /**
-     * @var array
-     */
-    protected $urls = [];
-
-    /**
-     * @var int
-     */
-    protected $sitemapCount = 0;
-
-    /**
-     * @var array
-     */
-    protected $errors = [];
-
-    /**
-     * @var array
-     */
-    protected $requestHeaders = [
+    public array $sitemaps = [];
+    protected array $urls = [];
+    protected int $sitemapCount = 0;
+    protected array $errors = [];
+    protected array $requestHeaders = [
         'User-Agent' => 'TYPO3 sitecrawler',
     ];
 
@@ -40,7 +30,7 @@ class CrawlSitemapCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setDescription('Fetches a website (including all sub pages), so the TYPO3 cache gets filled.')
+            ->setDescription('Crawl any sitemap including all sub sitemaps. It gathers all available urls and then calls each url. This way you can warm up the TYPO3 page cache. Any standard sitemap can be crawled: TYPO3, Shopware, ...')
             ->addArgument(
                 'url',
                 InputArgument::REQUIRED,
@@ -50,28 +40,39 @@ class CrawlSitemapCommand extends Command
                 'headers',
                 InputArgument::OPTIONAL,
                 "Request header arguments in json format. For basic auth you need to base64 encode user:password in the header.\n Example: '{\"Authorization\": \"Basic dXNlcjpwYXNzd29yZA==\", \"Cache-Control\": \"no-cache\"}'"
+            )
+            ->addOption(
+                'list',
+                'l',
+                InputOption::VALUE_OPTIONAL,
+                'Output list of gathered urls instead of crawling them. Accepts \"txt\" or \"json\" as value.'
             );
     }
 
+    /**
+     * @throws \JsonException
+     * @throws InvalidFormatException
+     * @throws InvalidUrlException
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $io = new SymfonyStyle($input, $output);
+
         $url = (string)$input->getArgument('url');
-        $output->writeln('Sitemap url: ' . $url, OutputInterface::VERBOSITY_VERBOSE);
+        $io->writeln('Sitemap url: ' . $url, OutputInterface::VERBOSITY_VERBOSE);
 
         // Validate input url
         if (!GeneralUtility::isValidUrl($url)) {
-            $output->writeln('Error: Invalid url');
-
-            return 1;
+            throw new InvalidUrlException('Invalid url given as argument!', 1657265973215);
         }
 
         // Set headers from argument
         if ($input->getArgument('headers')) {
             $this->requestHeaders = array_merge($this->requestHeaders, json_decode($input->getArgument('headers'), true, 512, JSON_THROW_ON_ERROR));
-            $output->writeln('Headers: ' . var_export($this->requestHeaders, true), OutputInterface::VERBOSITY_DEBUG);
+            $io->writeln('Headers: ' . var_export($this->requestHeaders, true), OutputInterface::VERBOSITY_DEBUG);
         }
 
-        $output->writeln('Gathering urls for crawling ...');
+        $io->writeln('Gathering urls for crawling ...', OutputInterface::VERBOSITY_VERBOSE);
         // Fetch urls
         $this->processUrl($url);
         if ($this->errors) {
@@ -82,29 +83,44 @@ class CrawlSitemapCommand extends Command
 
         // Return on empty urls
         if (!$this->urls) {
-            $output->writeln('No urls found');
+            $io->warning('No urls found');
 
             return 3;
         }
 
         // Display url and sitemap count
-        $output->writeln('Found ' . count($this->urls) . ' url(s)' . ($this->sitemapCount ? ' in ' . $this->sitemapCount . ' sitemap(s)' : ''));
+        $sitemapCount = count($this->sitemaps);
+        $io->writeln('Found ' . count($this->urls) . ' url(s)' . ($sitemapCount ? ' in ' . $sitemapCount . ' sitemap(s)' : ''),
+            OutputInterface::VERBOSITY_VERBOSE);
 
-        // Show urls in debug mode
-        $output->writeln('Urls: ' . var_export($this->urls, true), OutputInterface::VERBOSITY_DEBUG);
+        // Return url list as txt/json when format option is set
+        if ($format = $input->getOption('list')) {
+            switch (strtolower($format)) {
+                case 'json':
+                    $io->write(json_encode(['urls' => $this->urls, 'sitemaps' => $this->sitemaps], JSON_THROW_ON_ERROR));
+                    break;
+                case 'txt':
+                    $io->listing($this->urls);
+                    break;
+                default:
+                    throw new InvalidFormatException('Invalid format for list "' . htmlspecialchars($format) . '"!', 1657265268452);
+            }
+
+            return 0;
+        }
 
         // Process url list
         $this->processUrlList($output);
 
         // Print errors or success
         if ($this->errors) {
-            $output->writeln(' Finished with some errors!');
+            $io->warning('Finished with some errors!');
             $this->printErrors($output);
 
             return 4;
         }
 
-        $output->writeln(' Completed successfully!');
+        $io->success('Completed successfully!');
 
         return 0;
     }
@@ -240,6 +256,7 @@ class CrawlSitemapCommand extends Command
     {
         if (GeneralUtility::isValidUrl($url)) {
             ++$this->sitemapCount;
+            $this->sitemaps[] = $url;
             $this->getUrlListFromSitemap($url);
         }
     }
