@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Schliesser\Sitecrawler\Tests\Functional\Command;
 
+use Schliesser\Sitecrawler\Command\CrawlSitemapCommand;
 use Schliesser\Sitecrawler\Exception\InvalidFormatException;
 use Schliesser\Sitecrawler\Exception\InvalidUrlException;
 use Symfony\Component\Console\Exception\RuntimeException;
-use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
-use Schliesser\Sitecrawler\Command\CrawlSitemapCommand;
 use Symfony\Component\Console\Tester\CommandTester;
+use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 class CrawlSitemapCommandTest extends FunctionalTestCase
 {
