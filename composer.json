@@ -11,17 +11,23 @@
     }
   ],
   "require": {
-    "typo3/cms-core": "^9.5 || ^10.4 || ^11.4",
-    "ext-simplexml": "*"
+    "typo3/cms-core": "^10.4 || ^11.5",
+    "ext-simplexml": "*",
+    "php": "^7.4 || ^8.0"
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^3.0",
     "php-parallel-lint/php-parallel-lint": "^1.2",
-    "typo3/testing-framework": "^4 || ^5 || ^6"
+    "typo3/testing-framework": "^6"
   },
   "autoload": {
     "psr-4": {
       "Schliesser\\Sitecrawler\\": "Classes"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Schliesser\\Sitecrawler\\Tests\\": "Tests"
     }
   },
   "config": {
@@ -36,9 +42,11 @@
     "test": [
       "@test-php-lint",
       "@test-php-cs-fixer",
-      "@test-unit"
+      "@test-functional"
     ],
     "post-autoload-dump": [
+      "mkdir -p .Build/Web/typo3conf/ext/",
+      "[ -L .Build/Web/typo3conf/ext/sitecrawler ] || ln -snvf ../../../../. .Build/Web/typo3conf/ext/sitecrawler",
       "TYPO3\\TestingFramework\\Composer\\ExtensionTestEnvironment::prepare"
     ],
     "test-php-lint": [
@@ -52,8 +60,9 @@
     "test-php-cs-fixer-fix": [
       "php-cs-fixer fix -v --using-cache no"
     ],
-    "test-unit": [
-      ".Build/bin/phpunit --configuration Tests/Unit/phpunit.xml"
+    "test-functional": [
+      "[ -e .Build/bin/phpunit ] || composer update",
+      "TYPO3_PATH_WEB=$PWD/.Build typo3DatabaseDriver=pdo_sqlite typo3DatabaseName=test .Build/bin/phpunit -c Tests/FunctionalTests.xml Tests/Functional"
     ],
     "prepare-release": [
       "rm .gitignore",
@@ -62,13 +71,13 @@
       "rm -rf Tests",
       "rm .editorconfig",
       "rm .gitattributes",
-      "rm .php-cs-fixer.php",
-      "rm .php_cs.dist"
+      "rm .php-cs-fixer.php"
     ]
   },
   "extra": {
     "typo3/cms": {
-      "web-dir": ".Build",
+      "cms-package-dir": "{$vendor-dir}/typo3/cms",
+      "web-dir": ".Build/Web",
       "extension-key": "sitecrawler"
     }
   }
