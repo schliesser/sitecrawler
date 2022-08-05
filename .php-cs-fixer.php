@@ -24,7 +24,7 @@ return $config
         // A single space or none should be between cast and variable.
         'cast_spaces' => false,
         // Class, trait and interface elements must be separated with one or none blank line.
-        'class_attributes_separation' => ['elements'=>['method'=>'one']],
+        'class_attributes_separation' => ['elements'=>['method'=>'one', 'trait_import' => 'none']],
         // Whitespace around the keywords of a class, trait or interfaces definition should be one space.
         'class_definition' => ['single_line'=>true],
         // Namespace must not contain spacing, comments or PHPDoc.
@@ -112,7 +112,7 @@ return $config
         // Remove useless (semicolon) statements.
         'no_empty_statement' => true,
         // Removes extra blank lines and/or blank lines following configuration.
-        'no_extra_blank_lines' => ['tokens'=>['case','continue','curly_brace_block','default','extra','parenthesis_brace_block','square_brace_block','switch','throw','use','use_trait']],
+        'no_extra_blank_lines' => ['tokens'=>['case','continue','curly_brace_block','default','extra','parenthesis_brace_block','square_brace_block','switch','throw','use']],
         // Remove leading slashes in `use` clauses.
         'no_leading_import_slash' => true,
         // The namespace declaration line shouldn't contain leading whitespace.
