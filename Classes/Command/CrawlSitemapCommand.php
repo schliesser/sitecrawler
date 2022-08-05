@@ -30,7 +30,7 @@ class CrawlSitemapCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setDescription('Crawl any sitemap including all sub sitemaps. It gathers all available urls and then calls each url. This way you can warm up the TYPO3 page cache. Any standard sitemap can be crawled: TYPO3, Shopware, ...')
+            ->setHelp('Crawl any sitemap including all sub sitemaps. It gathers all available urls and then calls each url or writes a list to StdOut. Any standard sitemap can be crawled: TYPO3, Shopware, etc. You can use this e.g. to warm up the TYPO3 page cache.')
             ->addArgument(
                 'url',
                 InputArgument::REQUIRED,
@@ -45,7 +45,7 @@ class CrawlSitemapCommand extends Command
                 'list',
                 'l',
                 InputOption::VALUE_OPTIONAL,
-                'Output list of gathered urls instead of crawling them. Accepts \"txt\" or \"json\" as value.'
+                'Output list of gathered urls instead of crawling them. Accepts \'txt\' or \'json\' as value. (Not usable in the scheduler!)'
             );
     }
 
