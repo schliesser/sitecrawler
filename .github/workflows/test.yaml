@@ -9,7 +9,7 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                php-versions: [7.4, 8.0, 8.1]
+                php-versions: [7.4, 8.0, 8.1, 8.2]
         steps:
             - name: Checkout
               uses: actions/checkout@v1
@@ -60,6 +60,8 @@ jobs:
             max-parallel: 2
             matrix:
                 variants:
+                    - {typo3: 12, php: 8.2}
+                    - {typo3: 12, php: 8.1}
                     - {typo3: 11, php: 8.1}
                     - {typo3: 11, php: 8.0}
                     - {typo3: 11, php: 7.4}

@@ -16,7 +16,7 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     /**
      * @var array
      */
-    protected $testExtensionsToLoad = ['typo3conf/ext/sitecrawler'];
+    protected array $testExtensionsToLoad = ['typo3conf/ext/sitecrawler'];
 
     protected CommandTester $commandTester;
 
@@ -49,7 +49,7 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
         self::assertStringContainsString($expectedOutput, $commandOutput);
     }
 
-    public function commandDataProvider(): iterable
+    public static function commandDataProvider(): iterable
     {
         yield 'No url param' => [
             'parameters' => [],

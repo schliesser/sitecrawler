@@ -8,3 +8,4 @@ vendor/
 var/
 composer.lock
 **/.phpunit.result.cache
+Tests/.phpunit.cache
