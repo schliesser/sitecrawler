@@ -65,7 +65,6 @@ jobs:
                     - {typo3: 11, php: 8.1}
                     - {typo3: 11, php: 8.0}
                     - {typo3: 11, php: 7.4}
-                    - {typo3: 10, php: 7.4}
 
         name: "Run tests with PHP ${{ matrix.variants.php }}
           using TYPO3 ${{ matrix.variants.typo3 }}"
