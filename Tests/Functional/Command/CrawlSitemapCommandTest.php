@@ -13,9 +13,6 @@ use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 class CrawlSitemapCommandTest extends FunctionalTestCase
 {
-    /**
-     * @var array
-     */
     protected array $testExtensionsToLoad = ['typo3conf/ext/sitecrawler'];
 
     protected CommandTester $commandTester;
@@ -30,6 +27,7 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
 
     /**
      * @test
+     *
      * @dataProvider commandDataProvider
      */
     public function crawlSitemapCommandTest(array $parameters, string $expectedOutput, string $expectedError = ''): void
