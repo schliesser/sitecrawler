@@ -9,10 +9,10 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                php-versions: [7.4, 8.0, 8.1]
+                php-versions: [7.4, 8.0, 8.1, 8.2]
         steps:
             - name: Checkout
-              uses: actions/checkout@v1
+              uses: actions/checkout@v3
             - name: "Install PHP"
               uses: shivammathur/setup-php@v2
               with:
@@ -37,7 +37,7 @@ jobs:
                 php-versions: [8.1]
         steps:
             - name: Checkout
-              uses: actions/checkout@v1
+              uses: actions/checkout@v3
             - name: "Install PHP"
               uses: shivammathur/setup-php@v2
               with:
@@ -60,15 +60,16 @@ jobs:
             max-parallel: 2
             matrix:
                 variants:
+                    - {typo3: 12, php: 8.2}
+                    - {typo3: 12, php: 8.1}
                     - {typo3: 11, php: 8.1}
                     - {typo3: 11, php: 8.0}
                     - {typo3: 11, php: 7.4}
-                    - {typo3: 10, php: 7.4}
 
         name: "Run tests with PHP ${{ matrix.variants.php }}
           using TYPO3 ${{ matrix.variants.typo3 }}"
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v3
 
             - uses: shivammathur/setup-php@v2
               with:
@@ -94,3 +95,40 @@ jobs:
 
             - name: "Run Functional tests"
               run: composer run-script test-functional
+    tests-legacy:
+        runs-on: ubuntu-latest
+        strategy:
+            max-parallel: 2
+            matrix:
+                variants:
+                    - { typo3: 10, php: 7.4 }
+
+        name: "Run tests with PHP ${{ matrix.variants.php }}
+          using TYPO3 ${{ matrix.variants.typo3 }}"
+        steps:
+            -   uses: actions/checkout@v3
+
+            -   uses: shivammathur/setup-php@v2
+                with:
+                    php-version: ${{ matrix.variants.php }}
+                    extensions: xml, mbstring, curl
+
+            -   name: "Cache composer dependencies"
+                uses: actions/cache@v1
+                with:
+                    path: ~/.composer/cache
+                    key: php-${{ matrix.variants.php }}
+                        -typo3-${{ matrix.variants.typo3 }}
+                        -composer-${{ hashFiles('composer.json') }}
+                    restore-keys: |
+                        php-${{ matrix.variants.php }}
+                        -typo3-${{ matrix.variants.typo3 }}
+                        -composer-${{ hashFiles('composer.json') }}
+
+            -   name: "Install composer dependencies"
+                run: composer require typo3/minimal
+                    "^${{ matrix.variants.typo3 }}"
+                    --prefer-dist --no-progress --no-suggest
+
+            -   name: "Run Functional tests"
+                run: composer run-script test-functional-legacy
