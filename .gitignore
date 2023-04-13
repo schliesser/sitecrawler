@@ -2,10 +2,10 @@
 *.iml
 .php_cs.cache
 .idea/
-.Build/
-public/
-vendor/
-var/
+/.Build/
+/public/
+/vendor/
+/var/
 composer.lock
 **/.phpunit.result.cache
-Tests/.phpunit.cache
+/Tests/.phpunit.cache/
