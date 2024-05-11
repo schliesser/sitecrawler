@@ -1,0 +1,6 @@
+parameters:
+  level: 6
+  paths:
+    - .
+  ignoreErrors:
+  	- '#Variable \$_EXTKEY might not be defined.#'

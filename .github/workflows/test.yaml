@@ -9,16 +9,16 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                php-versions: [7.4, 8.0, 8.1, 8.2]
+                php-versions: [8.1, 8.2, 8.3]
         steps:
             - name: Checkout
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
             - name: "Install PHP"
               uses: shivammathur/setup-php@v2
               with:
                   php-version: "${{ matrix.php-versions }}"
             - name: "Cache composer dependencies"
-              uses: actions/cache@v1
+              uses: actions/cache@v4
               with:
                   path: ~/.composer/cache
                   key: php-${{ matrix.php-versions }}
@@ -34,16 +34,16 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                php-versions: [8.1]
+                php-versions: [8.3]
         steps:
             - name: Checkout
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
             - name: "Install PHP"
               uses: shivammathur/setup-php@v2
               with:
                   php-version: "${{ matrix.php-versions }}"
             - name: "Cache composer dependencies"
-              uses: actions/cache@v1
+              uses: actions/cache@v4
               with:
                   path: ~/.composer/cache
                   key: php-${{ matrix.php-versions }}
@@ -60,16 +60,16 @@ jobs:
             max-parallel: 2
             matrix:
                 variants:
+                    - {typo3: 13, php: 8.3}
+                    - {typo3: 13, php: 8.2}
+                    - {typo3: 12, php: 8.3}
                     - {typo3: 12, php: 8.2}
                     - {typo3: 12, php: 8.1}
-                    - {typo3: 11, php: 8.1}
-                    - {typo3: 11, php: 8.0}
-                    - {typo3: 11, php: 7.4}
 
         name: "Run tests with PHP ${{ matrix.variants.php }}
           using TYPO3 ${{ matrix.variants.typo3 }}"
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
 
             - uses: shivammathur/setup-php@v2
               with:
@@ -77,7 +77,7 @@ jobs:
                   extensions: xml, mbstring, curl
 
             - name: "Cache composer dependencies"
-              uses: actions/cache@v1
+              uses: actions/cache@v4
               with:
                   path: ~/.composer/cache
                   key: php-${{ matrix.variants.php }}
@@ -93,42 +93,9 @@ jobs:
                   "^${{ matrix.variants.typo3 }}"
                   --prefer-dist --no-progress --no-suggest
 
+            - name: "Run PHPStan tests"
+              run: composer run-script test-phpstan
+              # todo: move to separate task?
+
             - name: "Run Functional tests"
               run: composer run-script test-functional
-    tests-legacy:
-        runs-on: ubuntu-latest
-        strategy:
-            max-parallel: 2
-            matrix:
-                variants:
-                    - { typo3: 10, php: 7.4 }
-
-        name: "Run tests with PHP ${{ matrix.variants.php }}
-          using TYPO3 ${{ matrix.variants.typo3 }}"
-        steps:
-            -   uses: actions/checkout@v3
-
-            -   uses: shivammathur/setup-php@v2
-                with:
-                    php-version: ${{ matrix.variants.php }}
-                    extensions: xml, mbstring, curl
-
-            -   name: "Cache composer dependencies"
-                uses: actions/cache@v1
-                with:
-                    path: ~/.composer/cache
-                    key: php-${{ matrix.variants.php }}
-                        -typo3-${{ matrix.variants.typo3 }}
-                        -composer-${{ hashFiles('composer.json') }}
-                    restore-keys: |
-                        php-${{ matrix.variants.php }}
-                        -typo3-${{ matrix.variants.typo3 }}
-                        -composer-${{ hashFiles('composer.json') }}
-
-            -   name: "Install composer dependencies"
-                run: composer require typo3/minimal
-                    "^${{ matrix.variants.typo3 }}"
-                    --prefer-dist --no-progress --no-suggest
-
-            -   name: "Run Functional tests"
-                run: composer run-script test-functional-legacy

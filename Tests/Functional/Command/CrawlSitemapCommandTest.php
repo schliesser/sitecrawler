@@ -28,6 +28,8 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     /**
      * @test
      *
+     * @param string[] $parameters
+     *
      * @dataProvider commandDataProvider
      */
     public function crawlSitemapCommandTest(array $parameters, string $expectedOutput, string $expectedError = ''): void
@@ -47,6 +49,9 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
         self::assertStringContainsString($expectedOutput, $commandOutput);
     }
 
+    /**
+     * @return mixed[]
+     */
     public static function commandDataProvider(): iterable
     {
         yield 'No url param' => [
