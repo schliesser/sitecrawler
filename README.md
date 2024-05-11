@@ -10,10 +10,10 @@ Since version 1.1.0 the sitecrawler can read `robots.txt` files to fetch all def
 
 Composer based:
 ```bash
-vendor/bin/typo3cms sitecrawler:crawl 'https://www.example.com/sitemap.xml'
+vendor/bin/typo3 sitecrawler:crawl 'https://www.example.com/sitemap.xml'
 
 # with custom request headers
-vendor/bin/typo3cms sitecrawler:crawl 'https://www.example.com/sitemap.xml' '{"Authorization": "Basic dXNlcjpwYXNzd29yZA==", "Cache-Control": "no-cache"}'
+vendor/bin/typo3 sitecrawler:crawl 'https://www.example.com/sitemap.xml' '{"Authorization": "Basic dXNlcjpwYXNzd29yZA==", "Cache-Control": "no-cache"}'
 ```
 Non composer:
 ```bash

@@ -10,3 +10,4 @@
 /.travis.yml export-ignore
 /.php_cs.dist export-ignore
 /.php-cs-fixer.php export-ignore
+/,phpstan.neon export-ignore

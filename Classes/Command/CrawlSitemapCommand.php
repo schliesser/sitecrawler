@@ -4,6 +4,7 @@ namespace Schliesser\Sitecrawler\Command;
 
 use Schliesser\Sitecrawler\Exception\InvalidFormatException;
 use Schliesser\Sitecrawler\Exception\InvalidUrlException;
+use Schliesser\Sitecrawler\Helper\Error;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputArgument;
@@ -16,10 +17,14 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class CrawlSitemapCommand extends Command
 {
+    /** @var string[] */
     public array $sitemaps = [];
+    /** @var string[] */
     protected array $urls = [];
     protected int $sitemapCount = 0;
+    /** @var array<Error> */
     protected array $errors = [];
+    /** @var array<string, string> */
     protected array $requestHeaders = [
         'User-Agent' => 'TYPO3 sitecrawler',
     ];
@@ -132,7 +137,7 @@ class CrawlSitemapCommand extends Command
     {
         // print errors
         foreach ($this->errors as $error) {
-            $output->writeln($error['error'] . ': ' . $error['message']);
+            $output->writeln($error->getCode() . ': ' . $error->getMessage());
         }
 
         // reset errors
@@ -148,7 +153,7 @@ class CrawlSitemapCommand extends Command
         foreach ($progressBar->iterate($this->urls) as $url) {
             $result = $this->testUrl($url);
             if (!$result) {
-                $this->errors[] = ['error' => 1633234397666, 'message' => 'Unable to fetch url: "' . $url . '"'];
+                $this->errors[] = new Error(1633234397666, 'Unable to fetch url: "' . $url . '"');
             }
         }
 
@@ -212,12 +217,15 @@ class CrawlSitemapCommand extends Command
         }
     }
 
+    /**
+     * @return string[]
+     */
     protected function readRobotsTxt(string $robotsTxtUrl): array
     {
         // Fetch sitemap urls form robots.txt
         $content = $this->getUrl($robotsTxtUrl);
         if (!$content) {
-            $this->errors[] = ['error' => 1633234519166, 'message' => 'Unable to fetch robots.txt'];
+            $this->errors[] = new Error(1633234519166, 'Unable to fetch robots.txt');
 
             return [];
         }
@@ -230,21 +238,25 @@ class CrawlSitemapCommand extends Command
         return $sitemaps;
     }
 
+    /**
+     * @return mixed[]
+     */
     protected function getArrayFromUrl(string $url): array
     {
         try {
             $data = $this->getUrl($url);
             if (!$data) {
-                $this->errors[] = ['error' => 1633234217716, 'message' => 'Unable to load xml from url: "' . $url . '"'];
+                $this->errors[] = new Error(1633234217716, 'Unable to load xml from url: "' . $url . '"');
 
                 return [];
             }
             $xml = simplexml_load_string($data);
         } catch (\Exception $e) {
-            $this->errors[] = ['error' => $e->getCode(), 'message' => $e->getMessage()];
+            $this->errors[] = new Error($e->getCode(), $e->getMessage());
 
             return [];
         }
+
         // Convert SimpleXML Objects to associative array
         return json_decode(json_encode($xml), true) ?: [];
     }
@@ -273,10 +285,8 @@ class CrawlSitemapCommand extends Command
 
     /**
      * Wrapper for GeneralUtility::getUrl() with catcher for all exceptions
-     *
-     * @return false|mixed|string
      */
-    protected function getUrl(string $url)
+    protected function getUrl(string $url): ?string
     {
         try {
             $requestFactory = GeneralUtility::makeInstance(RequestFactory::class);
@@ -284,13 +294,16 @@ class CrawlSitemapCommand extends Command
 
             return $response->getBody()->getContents();
         } catch (\Exception $e) {
-            $this->errors[] = ['error' => $e->getCode(), 'message' => $e->getMessage()];
+            $this->errors[] = new Error($e->getCode(), $e->getMessage());
 
-            return false;
+            return null;
         }
     }
 
-    protected function testUrl(string $url)
+    /**
+     * @return mixed[]|null
+     */
+    protected function testUrl(string $url): ?array
     {
         try {
             $requestFactory = GeneralUtility::makeInstance(RequestFactory::class);
@@ -298,9 +311,9 @@ class CrawlSitemapCommand extends Command
 
             return $response->getHeaders();
         } catch (\Exception $e) {
-            $this->errors[] = ['error' => $e->getCode(), 'message' => $e->getMessage()];
+            $this->errors[] = new Error($e->getCode(), $e->getMessage());
 
-            return false;
+            return null;
         }
     }
 }
