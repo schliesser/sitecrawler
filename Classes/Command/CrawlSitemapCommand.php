@@ -4,7 +4,6 @@ namespace Schliesser\Sitecrawler\Command;
 
 use InvalidArgumentException;
 use JsonException;
-use Schliesser\Sitecrawler\Exception\Exception;
 use Schliesser\Sitecrawler\Exception\InvalidFormatException;
 use Schliesser\Sitecrawler\Exception\InvalidHeadersException;
 use Schliesser\Sitecrawler\Exception\InvalidUrlException;
@@ -31,6 +30,7 @@ class CrawlSitemapCommand extends Command
     /** @var array<string, string> */
     protected array $requestHeaders = [
         'User-Agent' => 'TYPO3 sitecrawler',
+        'Accept-Encoding' => 'gzip',
     ];
 
     /**
@@ -59,10 +59,10 @@ class CrawlSitemapCommand extends Command
     }
 
     /**
-     * @throws JsonException
      * @throws InvalidFormatException
-     * @throws InvalidUrlException
      * @throws InvalidHeadersException
+     * @throws InvalidUrlException
+     * @throws JsonException
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
@@ -180,10 +180,6 @@ class CrawlSitemapCommand extends Command
         $progressBar->finish();
     }
 
-    /**
-     * @throws JsonException
-     * @throws Exception
-     */
     protected function processUrl(string $url): void
     {
         $urlData = parse_url($url);
@@ -214,9 +210,6 @@ class CrawlSitemapCommand extends Command
 
     /**
      * Fetch sitemap from url, parse xml and create list with urls
-     *
-     * @throws JsonException
-     * @throws Exception
      */
     protected function getUrlListFromSitemap(string $url): void
     {
@@ -268,9 +261,6 @@ class CrawlSitemapCommand extends Command
 
     /**
      * @return mixed[]
-     *
-     * @throws JsonException
-     * @throws Exception
      */
     protected function getArrayFromUrl(string $url): array
     {
@@ -281,6 +271,19 @@ class CrawlSitemapCommand extends Command
 
                 return [];
             }
+
+            // Decode gzip compressed sitemaps
+            $isGzip = 0 === mb_strpos($data, "\x1f" . "\x8b" . "\x08", 0, 'US-ASCII');
+            if ($isGzip) {
+                $data = gzdecode($data);
+                if (!is_string($data)) {
+                    $this->errors[] = new Error(1715517082, 'Failed extract gzip compressed sitemap from url: "' . $url . '"');
+
+                    return [];
+                }
+            }
+
+            // Load xml data
             $xml = simplexml_load_string($data);
         } catch (\Exception $e) {
             $this->errors[] = new Error($e->getCode(), $e->getMessage());
@@ -289,9 +292,17 @@ class CrawlSitemapCommand extends Command
         }
 
         // Convert SimpleXML Objects to associative array
-        $array = json_decode(json_encode($xml, JSON_THROW_ON_ERROR) ?: '', true, 512, JSON_THROW_ON_ERROR);
+        try {
+            $array = json_decode(json_encode($xml, JSON_THROW_ON_ERROR) ?: '', true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            $this->errors[] = new Error(1715517272, 'Failed to transform xml data for url: "' . $url . '"');
+
+            return [];
+        }
         if (!is_array($array)) {
-            throw new Exception('Failed to transform xml data', 1715515053);
+            $this->errors[] = new Error(1715515053, 'Failed to transform xml data for url: "' . $url . '"');
+
+            return [];
         }
 
         return $array;
@@ -299,9 +310,6 @@ class CrawlSitemapCommand extends Command
 
     /**
      * Validate url and parse sitemap content
-     *
-     * @throws Exception
-     * @throws JsonException
      */
     protected function addSitemap(string $url): void
     {

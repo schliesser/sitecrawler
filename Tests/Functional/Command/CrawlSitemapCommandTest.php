@@ -159,5 +159,13 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
         //    'expectedOutput' => 'Completed successfully!',
         //    'expectedError' => '',
         //];
+        //yield 'Sitemap with gzipped subsitemaps' => [
+        //    // todo: add test for gzip sitemaps (e.g. Shopware 6)
+        //    'parameters' => [
+        //        'url' => 'https://example.com/sitemap.xml',
+        //    ],
+        //    'expectedOutput' => '1633234217716',
+        //    'expectedError' => '',
+        //];
     }
 }

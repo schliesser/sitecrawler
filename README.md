@@ -6,14 +6,22 @@ You can provide custom request headers in json format. For basic auth you need t
 
 Since version 1.1.0 the sitecrawler can read `robots.txt` files to fetch all defined sitemaps from it.
 
+Version 3.0.0 supports now gzipped sub sitemaps and TYPO3 v13. Dropped support for TYPO3 v11 and older.
+
 ## Examples
 
 Composer based:
 ```bash
-vendor/bin/typo3 sitecrawler:crawl 'https://www.example.com/sitemap.xml'
+bin/typo3 sitecrawler:crawl 'https://www.example.com/sitemap.xml'
 
 # with custom request headers
-vendor/bin/typo3 sitecrawler:crawl 'https://www.example.com/sitemap.xml' '{"Authorization": "Basic dXNlcjpwYXNzd29yZA==", "Cache-Control": "no-cache"}'
+bin/typo3 sitecrawler:crawl 'https://www.example.com/sitemap.xml' '{"Authorization": "Basic dXNlcjpwYXNzd29yZA==", "Cache-Control": "no-cache"}'
+
+# Only list all gathered urls
+bin/typo3 sitecrawler:crawl 'https://www.example.com/sitemap.xml' --list=txt
+
+# Only list all gathered urls as json
+bin/typo3 sitecrawler:crawl 'https://www.example.com/sitemap.xml' --list=json
 ```
 Non composer:
 ```bash
