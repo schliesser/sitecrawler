@@ -48,3 +48,7 @@ indent_size = 2
 # ChangeLog files
 [{ChangeLog,ChangeLog.txt}]
 indent_style = tab
+
+# NEON-Files
+[*.neon]
+indent_size = 2

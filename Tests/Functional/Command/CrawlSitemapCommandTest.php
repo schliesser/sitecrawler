@@ -9,6 +9,7 @@ use Schliesser\Sitecrawler\Exception\InvalidFormatException;
 use Schliesser\Sitecrawler\Exception\InvalidUrlException;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Tester\CommandTester;
+use Throwable;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 class CrawlSitemapCommandTest extends FunctionalTestCase
@@ -29,10 +30,11 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
      * @test
      *
      * @param string[] $parameters
+     * @param class-string<Throwable>|null $expectedError
      *
      * @dataProvider commandDataProvider
      */
-    public function crawlSitemapCommandTest(array $parameters, string $expectedOutput, string $expectedError = ''): void
+    public function crawlSitemapCommandTest(array $parameters, string $expectedOutput, ?string $expectedError = null): void
     {
         $arguments = [];
         if (!empty($parameters)) {
