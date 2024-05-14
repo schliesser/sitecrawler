@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Schliesser\Sitecrawler\Tests\Functional\Command;
 
+use donatj\MockWebServer\MockWebServer;
+use donatj\MockWebServer\Response;
+use PHPUnit\Framework\Attributes\Test;
 use Schliesser\Sitecrawler\Command\CrawlSitemapCommand;
 use Schliesser\Sitecrawler\Exception\InvalidFormatException;
 use Schliesser\Sitecrawler\Exception\InvalidUrlException;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Tester\CommandTester;
-use Throwable;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 class CrawlSitemapCommandTest extends FunctionalTestCase
@@ -18,154 +20,263 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
 
     protected CommandTester $commandTester;
 
+    protected static MockWebServer $server;
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Setup mock webserver
+        self::$server = new MockWebServer(1337);
+        self::$server->start();
 
         $command = new CrawlSitemapCommand();
         $this->commandTester = new CommandTester($command);
     }
 
-    /**
-     * @test
-     *
-     * @param string[] $parameters
-     * @param class-string<Throwable>|null $expectedError
-     *
-     * @dataProvider commandDataProvider
-     */
-    public function crawlSitemapCommandTest(array $parameters, string $expectedOutput, ?string $expectedError = null): void
+    protected function tearDown(): void
     {
-        $arguments = [];
-        if (!empty($parameters)) {
-            $arguments = $parameters;
-        }
-
-        if (!empty($expectedError)) {
-            $this->expectException($expectedError);
-        }
-
-        $this->commandTester->execute($arguments);
-        $commandOutput = $this->commandTester->getDisplay();
-
-        self::assertStringContainsString($expectedOutput, $commandOutput);
+        self::$server->stop();
     }
 
-    /**
-     * @return mixed[]
-     */
-    public static function commandDataProvider(): iterable
+    #[Test]
+    public function noParamsThrowsRuntimeException(): void
     {
-        yield 'No url param' => [
-            'parameters' => [],
-            'expectedOutput' => '',
-            'expectedError' => RuntimeException::class,
-        ];
-        yield 'Invalid url' => [
-            'parameters' => [
-                'url' => 'foo-bar',
-            ],
-            'expectedOutput' => '',
-            'expectedError' => InvalidUrlException::class,
-        ];
-        yield 'Sitemap with single url' => [
-            'parameters' => [
-                'url' => 'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/sitemap-1.xml',
-            ],
-            'expectedOutput' => 'Completed successfully!',
-            'expectedError' => '',
-        ];
-        yield 'Invalid list format' => [
-            'parameters' => [
-                'url' => 'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/sitemap-1.xml',
-                '--list' => 'foo',
-            ],
-            'expectedOutput' => '',
-            'expectedError' => InvalidFormatException::class,
-        ];
-        yield 'Sitemap with multiple urls as json' => [
-            'parameters' => [
-                'url' => 'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/sitemap-2.xml',
-                '--list' => 'json',
-            ],
-            'expectedOutput' => '{"urls":["https:\/\/example.com\/","https:\/\/example.com\/page"],"sitemaps":[]}',
-            'expectedError' => '',
-        ];
-        yield 'Sitemap with multiple urls as txt' => [
-            'parameters' => [
-                'url' => 'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/sitemap-2.xml',
-                '--list' => 'txt',
-            ],
-            'expectedOutput' => '* https://example.com/page',
-            'expectedError' => '',
-        ];
-        yield 'Sitemap with multiple urls' => [
-            'parameters' => [
-                'url' => 'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/sitemap-2.xml',
-            ],
-            'expectedOutput' => '[WARNING] Finished with some errors!',
-            'expectedError' => '',
-        ];
-        yield 'Sitemap index with single sitemap' => [
-            'parameters' => [
-                'url' => 'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/sitemap-index-1.xml',
-            ],
-            'expectedOutput' => 'Completed successfully!',
-            'expectedError' => '',
-        ];
-        yield 'Sitemap index with multiple sitemaps' => [
-            'parameters' => [
-                'url' => 'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/sitemap-index-2.xml',
-                '--list' => 'json',
-            ],
-            'expectedOutput' => '{"urls":["https:\/\/example.com\/","https:\/\/example.com\/","https:\/\/example.com\/page"],"sitemaps":["https:\/\/gist.githubusercontent.com\/schliesser\/042fe0d0780bde3f8223a74f25fbb3f1\/raw\/sitemap-1.xml","https:\/\/gist.githubusercontent.com\/schliesser\/042fe0d0780bde3f8223a74f25fbb3f1\/raw\/sitemap-2.xml"]}',
-            'expectedError' => '',
-        ];
-        // Check custom error codes
-        yield 'Unable to fetch robots.txt' => [
-            'parameters' => [
-                'url' => 'https://example.com/robots.txt',
-            ],
-            'expectedOutput' => '1633234519166',
-            'expectedError' => '',
-        ];
-        yield 'Unable to fetch robots.txt for domain' => [
-            'parameters' => [
-                'url' => 'https://example.com/',
-            ],
-            'expectedOutput' => '1633234519166',
-            'expectedError' => '',
-        ];
-        yield 'Unable to fetch url' => [
-            'parameters' => [
-                'url' => 'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/sitemap-2.xml',
-            ],
-            'expectedOutput' => '1633234397666',
-            'expectedError' => '',
-        ];
-        yield 'Unable to load xml from url' => [
-            'parameters' => [
-                'url' => 'https://example.com/sitemap.xml',
-            ],
-            'expectedOutput' => '1633234217716',
-            'expectedError' => '',
-        ];
-        // Resolve robots.txt successfully
-        //yield 'Read robots.txt' => [
-        //    'parameters' => [
-        //        // Todo: find a way to simulate the urls locally or place the fake robots.txt on a temp server
-        //        'url' => 'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/robots.txt',
-        //    ],
-        //    'expectedOutput' => 'Completed successfully!',
-        //    'expectedError' => '',
-        //];
-        //yield 'Sitemap with gzipped subsitemaps' => [
-        //    // todo: add test for gzip sitemaps (e.g. Shopware 6)
-        //    'parameters' => [
-        //        'url' => 'https://example.com/sitemap.xml',
-        //    ],
-        //    'expectedOutput' => '1633234217716',
-        //    'expectedError' => '',
-        //];
+        $this->expectException(RuntimeException::class);
+        $this->commandTester->execute([]);
+    }
+
+    #[Test]
+    public function invalidUrlThrowsInvalidUrlException(): void
+    {
+        $this->expectException(InvalidUrlException::class);
+        $this->commandTester->execute(['url' => 'foo-bar']);
+    }
+
+    #[Test]
+    public function sitemapWithSingleUrlGist(): void
+    {
+        $this->commandTester->execute(
+            ['url' => 'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/sitemap-1.xml']
+        );
+        self::assertStringContainsString('Completed successfully!', $this->commandTester->getDisplay());
+    }
+
+    #[Test]
+    public function sitemapWithSingleUrl(): void
+    {
+        $url = self::$server->setResponseOfPath(
+            '/sitemap.xml',
+            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-1.xml') ?: '')
+        );
+        $this->commandTester->execute(['url' => $url]);
+        self::assertStringContainsString('[OK] Completed successfully!', $this->commandTester->getDisplay());
+    }
+
+    #[Test]
+    public function invalidListFormat(): void
+    {
+        $this->expectException(InvalidFormatException::class);
+        $url = self::$server->setResponseOfPath(
+            '/sitemap.xml',
+            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-1.xml') ?: '')
+        );
+        $this->commandTester->execute([
+            'url' => $url,
+            '--list' => 'foo',
+        ]);
+    }
+
+    #[Test]
+    public function sitemapWithMultipleUrls(): void
+    {
+        $url = self::$server->setResponseOfPath(
+            '/sitemap.xml',
+            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml') ?: '')
+        );
+        $this->commandTester->execute([
+            'url' => $url,
+        ]);
+        self::assertStringContainsString('[OK] Completed successfully!', $this->commandTester->getDisplay());
+    }
+
+    #[Test]
+    public function sitemapWithMultipleUrlsAsJson(): void
+    {
+        $url = self::$server->setResponseOfPath(
+            '/sitemap.xml',
+            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml') ?: '')
+        );
+        $this->commandTester->execute([
+            'url' => $url,
+            '--list' => 'json',
+        ]);
+        self::assertSame(
+            '{"urls":["http:\/\/127.0.0.1:1337\/","http:\/\/127.0.0.1:1337\/page"],"sitemaps":[]}',
+            $this->commandTester->getDisplay()
+        );
+    }
+
+    #[Test]
+    public function sitemapWithMultipleUrlsAsTxt(): void
+    {
+        $url = self::$server->setResponseOfPath(
+            '/sitemap.xml',
+            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml') ?: '')
+        );
+        $this->commandTester->execute([
+            'url' => $url,
+            '--list' => 'txt',
+        ]);
+        self::assertSame(
+            " * http://127.0.0.1:1337/\n * http://127.0.0.1:1337/page\n\n",
+            $this->commandTester->getDisplay()
+        );
+    }
+
+    #[Test]
+    public function sitemapIndexWithSingleUrl(): void
+    {
+        $url = self::$server->setResponseOfPath(
+            '/sitemap.xml',
+            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-index-1.xml') ?: '')
+        );
+        self::$server->setResponseOfPath(
+            '/sitemap-1.xml',
+            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-1.xml') ?: '')
+        );
+        $this->commandTester->execute(['url' => $url]);
+        self::assertStringContainsString('[OK] Completed successfully!', $this->commandTester->getDisplay());
+    }
+
+    #[Test]
+    public function sitemapIndexWithMultipleSitemapsAsJson(): void
+    {
+        $url = self::$server->setResponseOfPath(
+            '/sitemap.xml',
+            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-index-2.xml') ?: '')
+        );
+        self::$server->setResponseOfPath(
+            '/sitemap-1.xml',
+            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-1.xml') ?: '')
+        );
+        self::$server->setResponseOfPath(
+            '/sitemap-2.xml',
+            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml') ?: '')
+        );
+        $this->commandTester->execute([
+            'url' => $url,
+            '--list' => 'json',
+        ]);
+        self::assertSame(
+            '{"urls":["http:\/\/127.0.0.1:1337\/","http:\/\/127.0.0.1:1337\/","http:\/\/127.0.0.1:1337\/page"],"sitemaps":["http:\/\/127.0.0.1:1337\/sitemap-1.xml","http:\/\/127.0.0.1:1337\/sitemap-2.xml"]}',
+            $this->commandTester->getDisplay()
+        );
+    }
+
+    #[Test]
+    public function unableToLoadXmlFromSitemap(): void
+    {
+        $url = self::$server->setResponseOfPath(
+            '/sitemap.xml',
+            new Response('404 Not found!', [], 404)
+        );
+        $this->commandTester->execute(['url' => $url]);
+        self::assertStringContainsString('1633234217716:', $this->commandTester->getDisplay());
+    }
+
+    #[Test]
+    public function unableToFetchRobotsTxt(): void
+    {
+        $url = self::$server->setResponseOfPath(
+            '/robots.txt',
+            new Response('404 Not found!', [], 404)
+        );
+        $this->commandTester->execute(['url' => $url]);
+        self::assertStringContainsString('1633234519166:', $this->commandTester->getDisplay());
+    }
+
+    #[Test]
+    public function unableToFetchRobotsTxtForDomain(): void
+    {
+        $url = self::$server->setResponseOfPath(
+            '/',
+            new Response('')
+        );
+        self::$server->setResponseOfPath(
+            '/robots.txt',
+            new Response('404 Not found!', [], 404)
+        );
+        $this->commandTester->execute(['url' => $url]);
+        self::assertStringContainsString('1633234519166:', $this->commandTester->getDisplay());
+    }
+
+    #[Test]
+    public function unableToFetchUrl(): void
+    {
+        $url = self::$server->setResponseOfPath(
+            '/sitemap.xml',
+            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml') ?: '')
+        );
+        self::$server->setResponseOfPath(
+            '/page',
+            new Response('', [], 404)
+        );
+        $this->commandTester->execute(['url' => $url]);
+        self::assertStringContainsString('1633234397666', $this->commandTester->getDisplay());
+    }
+
+    #[Test]
+    public function readSitemapsFromRobotsTxtAsJson(): void
+    {
+        $url = self::$server->setResponseOfPath(
+            '/robots.txt',
+            new Response(file_get_contents(__DIR__ . '/../Fixtures/robots.txt') ?: '')
+        );
+        self::$server->setResponseOfPath(
+            '/sitemap-index-1.xml',
+            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-index-1.xml') ?: '')
+        );
+        self::$server->setResponseOfPath(
+            '/sitemap-index-2.xml',
+            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-index-2.xml') ?: '')
+        );
+        self::$server->setResponseOfPath(
+            '/sitemap-1.xml',
+            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-1.xml') ?: '')
+        );
+        self::$server->setResponseOfPath(
+            '/sitemap-2.xml',
+            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml') ?: '')
+        );
+        $this->commandTester->execute([
+            'url' => $url,
+            '--list' => 'json',
+        ]);
+        self::assertSame(
+            '{"urls":["http:\/\/127.0.0.1:1337\/","http:\/\/127.0.0.1:1337\/","http:\/\/127.0.0.1:1337\/page","http:\/\/127.0.0.1:1337\/","http:\/\/127.0.0.1:1337\/","http:\/\/127.0.0.1:1337\/","http:\/\/127.0.0.1:1337\/page"],"sitemaps":["http:\/\/127.0.0.1:1337\/sitemap-1.xml","http:\/\/127.0.0.1:1337\/sitemap-1.xml","http:\/\/127.0.0.1:1337\/sitemap-2.xml"]}',
+            $this->commandTester->getDisplay()
+        );
+    }
+
+    #[Test]
+    public function sitemapIndexWithGzippedSitemap(): void
+    {
+        $url = self::$server->setResponseOfPath(
+            '/sitemap.xml',
+            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-index-gz.xml') ?: '')
+        );
+        self::$server->setResponseOfPath(
+            '/sitemap-2.xml.gz',
+            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml.gz') ?: '')
+        );
+        $this->commandTester->execute([
+            'url' => $url,
+            '--list' => 'json',
+        ]);
+        self::assertSame(
+            '{"urls":["http:\/\/127.0.0.1:1337\/","http:\/\/127.0.0.1:1337\/page"],"sitemaps":["http:\/\/127.0.0.1:1337\/sitemap-2.xml.gz"]}',
+            $this->commandTester->getDisplay()
+        );
     }
 }

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Sitemap: http://127.0.0.1:1337/sitemap-1.xml
+Sitemap: http://127.0.0.1:1337/sitemap-2.xml
+Sitemap: http://127.0.0.1:1337/sitemap-index-1.xml
+Sitemap: http://127.0.0.1:1337/sitemap-index-2.xml

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type="text/xsl" href="/typo3/sysext/seo/Resources/Public/CSS/Sitemap.xsl"?>
+
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <sitemap>
+    <loc>http://127.0.0.1:1337/sitemap-2.xml.gz</loc>
+    <lastmod>2020-06-30T10:36:11+02:00</lastmod>
+  </sitemap>
+
+</sitemapindex>
