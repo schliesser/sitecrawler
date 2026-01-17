@@ -258,7 +258,7 @@ return $config
         // Unary operators should be placed adjacent to their operands.
         'unary_operator_spaces' => true,
         // Visibility MUST be declared on all properties and methods; `abstract` and `final` MUST be declared before the visibility; `static` MUST be declared after the visibility.
-        'visibility_required' => true,
+        'modifier_keywords' => true,
         // In array declaration, there MUST be a whitespace after each comma.
         'whitespace_after_comma_in_array' => true,
         // Write conditions in Yoda style (`true`), non-Yoda style (`['equal' => false, 'identical' => false, 'less_and_greater' => false]`) or ignore those conditions (`null`) based on configuration.

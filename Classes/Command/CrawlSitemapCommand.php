@@ -8,6 +8,7 @@ use Schliesser\Sitecrawler\Exception\InvalidFormatException;
 use Schliesser\Sitecrawler\Exception\InvalidHeadersException;
 use Schliesser\Sitecrawler\Exception\InvalidUrlException;
 use Schliesser\Sitecrawler\Helper\Error;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputArgument;
@@ -18,6 +19,10 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Http\RequestFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
+#[AsCommand(
+    name: 'sitecrawler:crawl',
+    description: 'Crawl a sitemap by adding the url behind this command',
+)]
 class CrawlSitemapCommand extends Command
 {
     /** @var string[] */
@@ -84,11 +89,7 @@ class CrawlSitemapCommand extends Command
             if (!is_string($headers)) {
                 throw new InvalidArgumentException('Argument "headers" must be a json string!', 1715513588);
             }
-            $headerArray = json_decode($headers, true, 512, JSON_THROW_ON_ERROR);
-            if (!is_array($headerArray)) {
-                throw new InvalidHeadersException('Invalid header json given!', 1715514805);
-            }
-            $this->requestHeaders = array_merge($this->requestHeaders, $headerArray);
+            $this->requestHeaders = array_merge($this->requestHeaders, $this->parseHeaders($headers));
             $io->writeln('Headers: ' . var_export($this->requestHeaders, true), OutputInterface::VERBOSITY_DEBUG);
         }
 
@@ -217,22 +218,26 @@ class CrawlSitemapCommand extends Command
 
         if (!empty($arr['sitemap']) && is_array($arr['sitemap'])) {
             // Check for single entry
-            if (isset($arr['sitemap']['loc'])) {
-                $this->addSitemap((string)$arr['sitemap']['loc']);
+            if (!empty($arr['sitemap']['loc']) && is_string($arr['sitemap']['loc'])) {
+                $this->addSitemap($arr['sitemap']['loc']);
             } else {
                 // Handle multiple entries
                 foreach ($arr['sitemap'] as $sitemap) {
-                    $this->addSitemap((string)$sitemap['loc']);
+                    if (!empty($sitemap['loc']) && is_string($sitemap['loc'])) {
+                        $this->addSitemap($sitemap['loc']);
+                    }
                 }
             }
         } elseif (!empty($arr['url']) && is_array($arr['url'])) {
             // Check for single entry
-            if (isset($arr['url']['loc'])) {
-                $this->addUrl((string)$arr['url']['loc']);
+            if (!empty($arr['url']['loc']) && is_string($arr['url']['loc'])) {
+                $this->addUrl($arr['url']['loc']);
             } else {
                 // Handle multiple entries
                 foreach ($arr['url'] as $site) {
-                    $this->addUrl((string)$site['loc']);
+                    if (!empty($site['loc']) && is_string($site['loc'])) {
+                        $this->addUrl($site['loc']);
+                    }
                 }
             }
         }
@@ -362,5 +367,30 @@ class CrawlSitemapCommand extends Command
 
             return null;
         }
+    }
+
+    /**
+     * @return array<string, string>
+     *
+     * @throws InvalidHeadersException
+     * @throws JsonException
+     */
+    protected function parseHeaders(string $json): array
+    {
+        $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        $headers = [];
+
+        if (!is_array($data)) {
+            throw new InvalidHeadersException('Invalid header json');
+        }
+
+        foreach ($data as $name => $value) {
+            if (!is_string($name) || !is_string($value)) {
+                throw new InvalidHeadersException('Invalid header format');
+            }
+            $headers[$name] = $value;
+        }
+
+        return $headers;
     }
 }

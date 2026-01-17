@@ -14,15 +14,15 @@
     "php": "^8.1",
     "ext-simplexml": "*",
     "ext-zlib": "*",
-    "typo3/cms-core": "^12.4 || ^v13.0"
+    "typo3/cms-core": "^12.4 || ^13.4 || ^14.0 || 14.*.*@dev"
   },
   "require-dev": {
     "donatj/mock-webserver": "^2.7",
     "friendsofphp/php-cs-fixer": "^3.0",
     "php-parallel-lint/php-parallel-lint": "^1.2",
-    "saschaegerer/phpstan-typo3": "dev-master",
+    "phpstan/phpstan": "^2.1",
     "typo3/cms-composer-installers": "^5.0",
-    "typo3/testing-framework": "^8.0"
+    "typo3/testing-framework": "^8.0 || ^9.3"
   },
   "autoload": {
     "psr-4": {
