@@ -2,6 +2,4 @@
 
 namespace Schliesser\Sitecrawler\Exception;
 
-class InvalidFormatException extends Exception
-{
-}
+class InvalidFormatException extends Exception {}

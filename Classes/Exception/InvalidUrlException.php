@@ -2,6 +2,4 @@
 
 namespace Schliesser\Sitecrawler\Exception;
 
-class InvalidUrlException extends Exception
-{
-}
+class InvalidUrlException extends Exception {}

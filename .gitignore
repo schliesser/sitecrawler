@@ -9,3 +9,12 @@
 composer.lock
 **/.phpunit.result.cache
 /Tests/.phpunit.cache/
+/*.idea
+/.cache
+/.php-cs-fixer.cache
+/.phpunit.result.cache
+/Documentation-GENERATED-temp/
+/build
+/generate-documentation.sh
+/nbproject
+/var

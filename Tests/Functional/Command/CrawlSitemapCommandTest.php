@@ -6,6 +6,7 @@ namespace Schliesser\Sitecrawler\Tests\Functional\Command;
 
 use donatj\MockWebServer\MockWebServer;
 use donatj\MockWebServer\Response;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use Schliesser\Sitecrawler\Command\CrawlSitemapCommand;
 use Schliesser\Sitecrawler\Exception\InvalidFormatException;
@@ -14,6 +15,7 @@ use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Tester\CommandTester;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
+#[CoversClass(CrawlSitemapCommandTest::class)]
 class CrawlSitemapCommandTest extends FunctionalTestCase
 {
     protected array $testExtensionsToLoad = ['typo3conf/ext/sitecrawler'];
