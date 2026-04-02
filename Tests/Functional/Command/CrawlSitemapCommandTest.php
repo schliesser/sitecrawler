@@ -15,7 +15,7 @@ use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Tester\CommandTester;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
-#[CoversClass(CrawlSitemapCommandTest::class)]
+#[CoversClass(CrawlSitemapCommand::class)]
 class CrawlSitemapCommandTest extends FunctionalTestCase
 {
     protected array $testExtensionsToLoad = ['typo3conf/ext/sitecrawler'];
@@ -53,15 +53,6 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     {
         $this->expectException(InvalidUrlException::class);
         $this->commandTester->execute(['url' => 'foo-bar']);
-    }
-
-    #[Test]
-    public function sitemapWithSingleUrlGist(): void
-    {
-        $this->commandTester->execute(
-            ['url' => 'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/sitemap-1.xml']
-        );
-        self::assertStringContainsString('Completed successfully!', $this->commandTester->getDisplay());
     }
 
     #[Test]

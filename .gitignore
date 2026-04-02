@@ -14,7 +14,8 @@ composer.lock
 /.php-cs-fixer.cache
 /.phpunit.result.cache
 /Documentation-GENERATED-temp/
-/build
+/build/coverage
+/build/logs
 /generate-documentation.sh
 /nbproject
 /var

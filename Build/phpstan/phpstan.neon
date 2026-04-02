@@ -6,7 +6,7 @@ includes:
   - ../../.Build/vendor/spaze/phpstan-disallowed-calls/disallowed-loose-calls.neon
 
 parameters:
-  phpVersion: 80100
+  phpVersion: 80200
 
   level: 9
 
@@ -57,8 +57,3 @@ parameters:
         - '$_FILES'
         - '$_SERVER'
       message: 'Use PSR-7 API instead'
-
-  ignoreErrors:
-    -
-      message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) .* will always evaluate to#'
-      path: '../../Tests/'
