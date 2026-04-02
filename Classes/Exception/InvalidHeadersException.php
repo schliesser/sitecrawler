@@ -2,6 +2,4 @@
 
 namespace Schliesser\Sitecrawler\Exception;
 
-class InvalidHeadersException extends Exception
-{
-}
+class InvalidHeadersException extends Exception {}

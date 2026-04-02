@@ -2,8 +2,6 @@
 
 namespace Schliesser\Sitecrawler\Command;
 
-use InvalidArgumentException;
-use JsonException;
 use Schliesser\Sitecrawler\Exception\InvalidFormatException;
 use Schliesser\Sitecrawler\Exception\InvalidHeadersException;
 use Schliesser\Sitecrawler\Exception\InvalidUrlException;
@@ -67,7 +65,7 @@ class CrawlSitemapCommand extends Command
      * @throws InvalidFormatException
      * @throws InvalidHeadersException
      * @throws InvalidUrlException
-     * @throws JsonException
+     * @throws \JsonException
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
@@ -75,7 +73,7 @@ class CrawlSitemapCommand extends Command
 
         $url = $input->getArgument('url');
         if (!is_string($url)) {
-            throw new InvalidArgumentException('Argument "url" must be a string!', 1715513484);
+            throw new \InvalidArgumentException('Argument "url" must be a string!', 1715513484);
         }
         $io->writeln('Sitemap url: ' . $url, OutputInterface::VERBOSITY_VERBOSE);
 
@@ -85,9 +83,10 @@ class CrawlSitemapCommand extends Command
         }
 
         // Set headers from argument
-        if ($headers = $input->getArgument('headers')) {
+        $headers = $input->getArgument('headers');
+        if ($headers !== null) {
             if (!is_string($headers)) {
-                throw new InvalidArgumentException('Argument "headers" must be a json string!', 1715513588);
+                throw new \InvalidArgumentException('Argument "headers" must be a json string!', 1715513588);
             }
             $this->requestHeaders = array_merge($this->requestHeaders, $this->parseHeaders($headers));
             $io->writeln('Headers: ' . var_export($this->requestHeaders, true), OutputInterface::VERBOSITY_DEBUG);
@@ -96,14 +95,14 @@ class CrawlSitemapCommand extends Command
         $io->writeln('Gathering urls for crawling ...', OutputInterface::VERBOSITY_VERBOSE);
         // Fetch urls
         $this->processUrl($url);
-        if ($this->errors) {
+        if ($this->errors !== []) {
             $this->printErrors($output);
 
             return 2;
         }
 
         // Return on empty urls
-        if (!$this->urls) {
+        if ($this->urls === []) {
             $io->warning('No urls found');
 
             return 3;
@@ -111,24 +110,22 @@ class CrawlSitemapCommand extends Command
 
         // Display url and sitemap count
         $sitemapCount = count($this->sitemaps);
-        $io->writeln('Found ' . count($this->urls) . ' url(s)' . ($sitemapCount ? ' in ' . $sitemapCount . ' sitemap(s)' : ''),
-            OutputInterface::VERBOSITY_VERBOSE);
+        $io->writeln(
+            'Found ' . count($this->urls) . ' url(s)' . ($sitemapCount > 0 ? ' in ' . $sitemapCount . ' sitemap(s)' : ''),
+            OutputInterface::VERBOSITY_VERBOSE
+        );
 
         // Return url list as txt/json when format option is set
-        if ($format = $input->getOption('list')) {
+        $format = $input->getOption('list');
+        if ($format !== null) {
             if (!is_string($format)) {
-                throw new InvalidArgumentException('Argument "list" must be a string!', 1715514158);
+                throw new \InvalidArgumentException('Argument "list" must be a string!', 1715514158);
             }
-            switch (strtolower($format)) {
-                case 'json':
-                    $io->write(json_encode(['urls' => $this->urls, 'sitemaps' => $this->sitemaps], JSON_THROW_ON_ERROR));
-                    break;
-                case 'txt':
-                    $io->listing($this->urls);
-                    break;
-                default:
-                    throw new InvalidFormatException('Invalid format for list "' . htmlspecialchars($format) . '"!', 1657265268452);
-            }
+            match (strtolower($format)) {
+                'json' => $io->write(json_encode(['urls' => $this->urls, 'sitemaps' => $this->sitemaps], JSON_THROW_ON_ERROR)),
+                'txt' => $io->listing($this->urls),
+                default => throw new InvalidFormatException('Invalid format for list "' . htmlspecialchars($format, ENT_QUOTES) . '"!', 1657265268452),
+            };
 
             return 0;
         }
@@ -137,7 +134,7 @@ class CrawlSitemapCommand extends Command
         $this->processUrlList($output);
 
         // Print errors or success
-        if ($this->errors) {
+        if ($this->errors !== []) {
             $io->warning('Finished with some errors!');
             $this->printErrors($output);
 
@@ -171,7 +168,7 @@ class CrawlSitemapCommand extends Command
         // Process url list
         foreach ($progressBar->iterate($this->urls) as $url) {
             $result = $this->testUrl($url);
-            if (!$result) {
+            if ($result === null) {
                 $this->errors[] = new Error(1633234397666, 'Unable to fetch url: "' . $url . '"');
             }
         }
@@ -189,17 +186,18 @@ class CrawlSitemapCommand extends Command
         // Read robots.txt file if the urls path is /robots.txt
         if (isset($urlData['path']) && $urlData['path'] === '/robots.txt') {
             $robotsUrl = true;
-        } elseif ((empty($urlData['path']) || $urlData['path'] === '/') && empty($urlData['query'])) {
+        } elseif ((!isset($urlData['path']) || $urlData['path'] === '' || $urlData['path'] === '/') && (!isset($urlData['query']) || $urlData['query'] === '')) {
             // No path / empty path: use robots.txt file
             // robots.txt needs to be on root always
-            if (empty($urlData['scheme']) || empty($urlData['host'])) {
+            if (!isset($urlData['scheme']) || $urlData['scheme'] === '' || !isset($urlData['host']) || $urlData['host'] === '') {
                 throw new InvalidUrlException('Missing Scheme and Host in url: "' . $url . '"', 1715515452);
             }
             $url = $urlData['scheme'] . '://' . $urlData['host'] . (isset($urlData['port']) ? ':' . $urlData['port'] : '') . '/robots.txt';
             $robotsUrl = true;
         }
         if ($robotsUrl) {
-            if (!empty($sitemaps = $this->readRobotsTxt($url))) {
+            $sitemaps = $this->readRobotsTxt($url);
+            if ($sitemaps !== []) {
                 foreach ($sitemaps as $sitemap) {
                     $this->getUrlListFromSitemap($sitemap);
                 }
@@ -216,26 +214,26 @@ class CrawlSitemapCommand extends Command
     {
         $arr = $this->getArrayFromUrl($url);
 
-        if (!empty($arr['sitemap']) && is_array($arr['sitemap'])) {
+        if (isset($arr['sitemap']) && is_array($arr['sitemap']) && $arr['sitemap'] !== []) {
             // Check for single entry
-            if (!empty($arr['sitemap']['loc']) && is_string($arr['sitemap']['loc'])) {
+            if (isset($arr['sitemap']['loc']) && is_string($arr['sitemap']['loc']) && $arr['sitemap']['loc'] !== '') {
                 $this->addSitemap($arr['sitemap']['loc']);
             } else {
                 // Handle multiple entries
                 foreach ($arr['sitemap'] as $sitemap) {
-                    if (!empty($sitemap['loc']) && is_string($sitemap['loc'])) {
+                    if (is_array($sitemap) && isset($sitemap['loc']) && is_string($sitemap['loc']) && $sitemap['loc'] !== '') {
                         $this->addSitemap($sitemap['loc']);
                     }
                 }
             }
-        } elseif (!empty($arr['url']) && is_array($arr['url'])) {
+        } elseif (isset($arr['url']) && is_array($arr['url']) && $arr['url'] !== []) {
             // Check for single entry
-            if (!empty($arr['url']['loc']) && is_string($arr['url']['loc'])) {
+            if (isset($arr['url']['loc']) && is_string($arr['url']['loc']) && $arr['url']['loc'] !== '') {
                 $this->addUrl($arr['url']['loc']);
             } else {
                 // Handle multiple entries
                 foreach ($arr['url'] as $site) {
-                    if (!empty($site['loc']) && is_string($site['loc'])) {
+                    if (is_array($site) && isset($site['loc']) && is_string($site['loc']) && $site['loc'] !== '') {
                         $this->addUrl($site['loc']);
                     }
                 }
@@ -250,7 +248,7 @@ class CrawlSitemapCommand extends Command
     {
         // Fetch sitemap urls form robots.txt
         $content = $this->getUrl($robotsTxtUrl);
-        if (!$content) {
+        if ($content === null || $content === '') {
             $this->errors[] = new Error(1633234519166, 'Unable to fetch robots.txt');
 
             return [];
@@ -271,14 +269,14 @@ class CrawlSitemapCommand extends Command
     {
         try {
             $data = $this->getUrl($url);
-            if (!$data) {
+            if ($data === null || $data === '') {
                 $this->errors[] = new Error(1633234217716, 'Unable to load xml from url: "' . $url . '"');
 
                 return [];
             }
 
             // Decode gzip compressed sitemaps
-            $isGzip = 0 === mb_strpos($data, "\x1f" . "\x8b" . "\x08", 0, 'US-ASCII');
+            $isGzip = mb_strpos($data, "\x1f" . "\x8b" . "\x08", 0, 'US-ASCII') === 0;
             if ($isGzip) {
                 $data = gzdecode($data);
                 if (!is_string($data)) {
@@ -298,8 +296,8 @@ class CrawlSitemapCommand extends Command
 
         // Convert SimpleXML Objects to associative array
         try {
-            $array = json_decode(json_encode($xml, JSON_THROW_ON_ERROR) ?: '', true, 512, JSON_THROW_ON_ERROR);
-        } catch (JsonException $e) {
+            $array = json_decode(json_encode($xml, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
             $this->errors[] = new Error(1715517272, 'Failed to transform xml data for url: "' . $url . '"');
 
             return [];
@@ -373,7 +371,7 @@ class CrawlSitemapCommand extends Command
      * @return array<string, string>
      *
      * @throws InvalidHeadersException
-     * @throws JsonException
+     * @throws \JsonException
      */
     protected function parseHeaders(string $json): array
     {
@@ -381,12 +379,12 @@ class CrawlSitemapCommand extends Command
         $headers = [];
 
         if (!is_array($data)) {
-            throw new InvalidHeadersException('Invalid header json');
+            throw new InvalidHeadersException('Invalid header json', 6068357587);
         }
 
         foreach ($data as $name => $value) {
             if (!is_string($name) || !is_string($value)) {
-                throw new InvalidHeadersException('Invalid header format');
+                throw new InvalidHeadersException('Invalid header format', 5240210327);
             }
             $headers[$name] = $value;
         }

@@ -6,6 +6,7 @@ namespace Schliesser\Sitecrawler\Tests\Functional\Command;
 
 use donatj\MockWebServer\MockWebServer;
 use donatj\MockWebServer\Response;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use Schliesser\Sitecrawler\Command\CrawlSitemapCommand;
 use Schliesser\Sitecrawler\Exception\InvalidFormatException;
@@ -14,6 +15,7 @@ use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Tester\CommandTester;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
+#[CoversClass(CrawlSitemapCommand::class)]
 class CrawlSitemapCommandTest extends FunctionalTestCase
 {
     protected array $testExtensionsToLoad = ['typo3conf/ext/sitecrawler'];
@@ -37,6 +39,7 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     protected function tearDown(): void
     {
         self::$server->stop();
+        parent::tearDown();
     }
 
     #[Test]
@@ -54,20 +57,11 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function sitemapWithSingleUrlGist(): void
-    {
-        $this->commandTester->execute(
-            ['url' => 'https://gist.githubusercontent.com/schliesser/042fe0d0780bde3f8223a74f25fbb3f1/raw/sitemap-1.xml']
-        );
-        self::assertStringContainsString('Completed successfully!', $this->commandTester->getDisplay());
-    }
-
-    #[Test]
     public function sitemapWithSingleUrl(): void
     {
         $url = self::$server->setResponseOfPath(
             '/sitemap.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-1.xml') ?: '')
+            new Response($this->readFixture('sitemap-1.xml'))
         );
         $this->commandTester->execute(['url' => $url]);
         self::assertStringContainsString('[OK] Completed successfully!', $this->commandTester->getDisplay());
@@ -79,7 +73,7 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
         $this->expectException(InvalidFormatException::class);
         $url = self::$server->setResponseOfPath(
             '/sitemap.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-1.xml') ?: '')
+            new Response($this->readFixture('sitemap-1.xml'))
         );
         $this->commandTester->execute([
             'url' => $url,
@@ -92,7 +86,7 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     {
         $url = self::$server->setResponseOfPath(
             '/sitemap.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml') ?: '')
+            new Response($this->readFixture('sitemap-2.xml'))
         );
         $this->commandTester->execute([
             'url' => $url,
@@ -105,7 +99,7 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     {
         $url = self::$server->setResponseOfPath(
             '/sitemap.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml') ?: '')
+            new Response($this->readFixture('sitemap-2.xml'))
         );
         $this->commandTester->execute([
             'url' => $url,
@@ -122,7 +116,7 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     {
         $url = self::$server->setResponseOfPath(
             '/sitemap.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml') ?: '')
+            new Response($this->readFixture('sitemap-2.xml'))
         );
         $this->commandTester->execute([
             'url' => $url,
@@ -139,11 +133,11 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     {
         $url = self::$server->setResponseOfPath(
             '/sitemap.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-index-1.xml') ?: '')
+            new Response($this->readFixture('sitemap-index-1.xml'))
         );
         self::$server->setResponseOfPath(
             '/sitemap-1.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-1.xml') ?: '')
+            new Response($this->readFixture('sitemap-1.xml'))
         );
         $this->commandTester->execute(['url' => $url]);
         self::assertStringContainsString('[OK] Completed successfully!', $this->commandTester->getDisplay());
@@ -154,15 +148,15 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     {
         $url = self::$server->setResponseOfPath(
             '/sitemap.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-index-2.xml') ?: '')
+            new Response($this->readFixture('sitemap-index-2.xml'))
         );
         self::$server->setResponseOfPath(
             '/sitemap-1.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-1.xml') ?: '')
+            new Response($this->readFixture('sitemap-1.xml'))
         );
         self::$server->setResponseOfPath(
             '/sitemap-2.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml') ?: '')
+            new Response($this->readFixture('sitemap-2.xml'))
         );
         $this->commandTester->execute([
             'url' => $url,
@@ -216,7 +210,7 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     {
         $url = self::$server->setResponseOfPath(
             '/sitemap.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml') ?: '')
+            new Response($this->readFixture('sitemap-2.xml'))
         );
         self::$server->setResponseOfPath(
             '/page',
@@ -231,23 +225,23 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     {
         $url = self::$server->setResponseOfPath(
             '/robots.txt',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/robots.txt') ?: '')
+            new Response($this->readFixture('robots.txt'))
         );
         self::$server->setResponseOfPath(
             '/sitemap-index-1.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-index-1.xml') ?: '')
+            new Response($this->readFixture('sitemap-index-1.xml'))
         );
         self::$server->setResponseOfPath(
             '/sitemap-index-2.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-index-2.xml') ?: '')
+            new Response($this->readFixture('sitemap-index-2.xml'))
         );
         self::$server->setResponseOfPath(
             '/sitemap-1.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-1.xml') ?: '')
+            new Response($this->readFixture('sitemap-1.xml'))
         );
         self::$server->setResponseOfPath(
             '/sitemap-2.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml') ?: '')
+            new Response($this->readFixture('sitemap-2.xml'))
         );
         $this->commandTester->execute([
             'url' => $url,
@@ -264,11 +258,11 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     {
         $url = self::$server->setResponseOfPath(
             '/sitemap.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-index-gz.xml') ?: '')
+            new Response($this->readFixture('sitemap-index-gz.xml'))
         );
         self::$server->setResponseOfPath(
             '/sitemap-2.xml.gz',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml.gz') ?: '')
+            new Response($this->readFixture('sitemap-2.xml.gz'))
         );
         $this->commandTester->execute([
             'url' => $url,
@@ -278,5 +272,13 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
             '{"urls":["http:\/\/127.0.0.1:1337\/","http:\/\/127.0.0.1:1337\/page"],"sitemaps":["http:\/\/127.0.0.1:1337\/sitemap-2.xml.gz"]}',
             $this->commandTester->getDisplay()
         );
+    }
+
+    private function readFixture(string $filename): string
+    {
+        $path = __DIR__ . '/../Fixtures/' . $filename;
+        $content = file_get_contents($path);
+        self::assertIsString($content, sprintf('Fixture file "%s" could not be read.', $filename));
+        return $content;
     }
 }
