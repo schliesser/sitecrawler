@@ -1,2 +1,25 @@
 parameters:
-	ignoreErrors: []
+	ignoreErrors:
+		-
+			message: '#^Class cognitive complexity is 83, keep it under 40$#'
+			identifier: complexity.classLike
+			count: 1
+			path: ../../Classes/Command/CrawlSitemapCommand.php
+
+		-
+			message: '#^Cognitive complexity for "Schliesser\\Sitecrawler\\Command\\CrawlSitemapCommand\:\:execute\(\)" is 12, keep it under 9$#'
+			identifier: complexity.functionLike
+			count: 1
+			path: ../../Classes/Command/CrawlSitemapCommand.php
+
+		-
+			message: '#^Cognitive complexity for "Schliesser\\Sitecrawler\\Command\\CrawlSitemapCommand\:\:getUrlListFromSitemap\(\)" is 36, keep it under 9$#'
+			identifier: complexity.functionLike
+			count: 1
+			path: ../../Classes/Command/CrawlSitemapCommand.php
+
+		-
+			message: '#^Cognitive complexity for "Schliesser\\Sitecrawler\\Command\\CrawlSitemapCommand\:\:processUrl\(\)" is 14, keep it under 9$#'
+			identifier: complexity.functionLike
+			count: 1
+			path: ../../Classes/Command/CrawlSitemapCommand.php

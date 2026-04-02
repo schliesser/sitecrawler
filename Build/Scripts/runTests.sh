@@ -422,7 +422,7 @@ while getopts "a:b:s:d:i:p:t:xy:o:nhu" OPT; do
             ;;
         t)
             CORE_VERSION=${OPTARG}
-            if ! [[ ${CORE_VERSION} =~ ^(12.4|13.4|14.1)$ ]]; then
+            if ! [[ ${CORE_VERSION} =~ ^(12.4|13.4|14.0)$ ]]; then
                 INVALID_OPTIONS+=("-t ${OPTARG}")
             fi
             ;;

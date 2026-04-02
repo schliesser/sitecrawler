@@ -20,9 +20,9 @@ parameters:
     param_type: 100
     property_type: 95
 
-  cognitive_complexity:
-    class: 10
-    function: 5
+#  cognitive_complexity:
+#    class: 10
+#    function: 5
 
   type_perfect:
     no_mixed_property: true

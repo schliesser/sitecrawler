@@ -39,6 +39,7 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     protected function tearDown(): void
     {
         self::$server->stop();
+        parent::tearDown();
     }
 
     #[Test]
@@ -60,7 +61,7 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     {
         $url = self::$server->setResponseOfPath(
             '/sitemap.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-1.xml') ?: '')
+            new Response($this->readFixture('sitemap-1.xml'))
         );
         $this->commandTester->execute(['url' => $url]);
         self::assertStringContainsString('[OK] Completed successfully!', $this->commandTester->getDisplay());
@@ -72,7 +73,7 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
         $this->expectException(InvalidFormatException::class);
         $url = self::$server->setResponseOfPath(
             '/sitemap.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-1.xml') ?: '')
+            new Response($this->readFixture('sitemap-1.xml'))
         );
         $this->commandTester->execute([
             'url' => $url,
@@ -85,7 +86,7 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     {
         $url = self::$server->setResponseOfPath(
             '/sitemap.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml') ?: '')
+            new Response($this->readFixture('sitemap-2.xml'))
         );
         $this->commandTester->execute([
             'url' => $url,
@@ -98,7 +99,7 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     {
         $url = self::$server->setResponseOfPath(
             '/sitemap.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml') ?: '')
+            new Response($this->readFixture('sitemap-2.xml'))
         );
         $this->commandTester->execute([
             'url' => $url,
@@ -115,7 +116,7 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     {
         $url = self::$server->setResponseOfPath(
             '/sitemap.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml') ?: '')
+            new Response($this->readFixture('sitemap-2.xml'))
         );
         $this->commandTester->execute([
             'url' => $url,
@@ -132,11 +133,11 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     {
         $url = self::$server->setResponseOfPath(
             '/sitemap.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-index-1.xml') ?: '')
+            new Response($this->readFixture('sitemap-index-1.xml'))
         );
         self::$server->setResponseOfPath(
             '/sitemap-1.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-1.xml') ?: '')
+            new Response($this->readFixture('sitemap-1.xml'))
         );
         $this->commandTester->execute(['url' => $url]);
         self::assertStringContainsString('[OK] Completed successfully!', $this->commandTester->getDisplay());
@@ -147,15 +148,15 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     {
         $url = self::$server->setResponseOfPath(
             '/sitemap.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-index-2.xml') ?: '')
+            new Response($this->readFixture('sitemap-index-2.xml'))
         );
         self::$server->setResponseOfPath(
             '/sitemap-1.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-1.xml') ?: '')
+            new Response($this->readFixture('sitemap-1.xml'))
         );
         self::$server->setResponseOfPath(
             '/sitemap-2.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml') ?: '')
+            new Response($this->readFixture('sitemap-2.xml'))
         );
         $this->commandTester->execute([
             'url' => $url,
@@ -209,7 +210,7 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     {
         $url = self::$server->setResponseOfPath(
             '/sitemap.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml') ?: '')
+            new Response($this->readFixture('sitemap-2.xml'))
         );
         self::$server->setResponseOfPath(
             '/page',
@@ -224,23 +225,23 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     {
         $url = self::$server->setResponseOfPath(
             '/robots.txt',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/robots.txt') ?: '')
+            new Response($this->readFixture('robots.txt'))
         );
         self::$server->setResponseOfPath(
             '/sitemap-index-1.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-index-1.xml') ?: '')
+            new Response($this->readFixture('sitemap-index-1.xml'))
         );
         self::$server->setResponseOfPath(
             '/sitemap-index-2.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-index-2.xml') ?: '')
+            new Response($this->readFixture('sitemap-index-2.xml'))
         );
         self::$server->setResponseOfPath(
             '/sitemap-1.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-1.xml') ?: '')
+            new Response($this->readFixture('sitemap-1.xml'))
         );
         self::$server->setResponseOfPath(
             '/sitemap-2.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml') ?: '')
+            new Response($this->readFixture('sitemap-2.xml'))
         );
         $this->commandTester->execute([
             'url' => $url,
@@ -257,11 +258,11 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
     {
         $url = self::$server->setResponseOfPath(
             '/sitemap.xml',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-index-gz.xml') ?: '')
+            new Response($this->readFixture('sitemap-index-gz.xml'))
         );
         self::$server->setResponseOfPath(
             '/sitemap-2.xml.gz',
-            new Response(file_get_contents(__DIR__ . '/../Fixtures/sitemap-2.xml.gz') ?: '')
+            new Response($this->readFixture('sitemap-2.xml.gz'))
         );
         $this->commandTester->execute([
             'url' => $url,
@@ -271,5 +272,13 @@ class CrawlSitemapCommandTest extends FunctionalTestCase
             '{"urls":["http:\/\/127.0.0.1:1337\/","http:\/\/127.0.0.1:1337\/page"],"sitemaps":["http:\/\/127.0.0.1:1337\/sitemap-2.xml.gz"]}',
             $this->commandTester->getDisplay()
         );
+    }
+
+    private function readFixture(string $filename): string
+    {
+        $path = __DIR__ . '/../Fixtures/' . $filename;
+        $content = file_get_contents($path);
+        self::assertIsString($content, sprintf('Fixture file "%s" could not be read.', $filename));
+        return $content;
     }
 }
